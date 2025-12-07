@@ -1,4 +1,3 @@
-using BehaviorTree;
 using UnityEngine;
 
 namespace BehaviorTree.Demo.Scripts.EnemyAI
@@ -41,7 +40,7 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
             }
 
             _ctx.target = bestTarget;
-            return NodeState.Running;
+            return NodeState.Success;
         }
     }
 }

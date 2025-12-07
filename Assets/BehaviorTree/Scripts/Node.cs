@@ -1,33 +1,47 @@
-using UnityEngine;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace BehaviorTree
 {
     public abstract class Node
     {
-        private bool _started = false;
+        private bool _started;
 
-        public NodeEventType LastEvent { get; private set; } = NodeEventType.None;
-        public int LastEventFrame { get; private set; }
-        public float LastEventTime { get; private set; }
-
+#if UNITY_EDITOR
+        // 노드 결과 (Success / Failure / Running)
         public NodeState LastResult { get; private set; } = NodeState.Running;
 
+        public bool EnteredThisFrame { get; internal set; }
+        public bool UpdatedThisFrame { get; internal set; }
+        public bool ExitedThisFrame { get; internal set; }
+#endif
         public NodeState Update()
         {
+            // Enter 처리
             if (!_started)
             {
+#if UNITY_EDITOR
                 MarkEnter();
+#endif
                 OnStart();
                 _started = true;
             }
 
+            // Update 처리
+#if UNITY_EDITOR
             MarkUpdate();
+#endif
             NodeState result = OnUpdate();
+#if UNITY_EDITOR
             LastResult = result;
+#endif
 
+            // Exit 처리
             if (result != NodeState.Running)
             {
+#if UNITY_EDITOR
                 MarkExit();
+#endif
                 OnEnd();
                 _started = false;
             }
@@ -40,33 +54,32 @@ namespace BehaviorTree
         protected virtual void OnEnd() { }
         public virtual void DrawGizmos() { }
 
-        protected void MarkEnter()
-        {
-            LastEvent = NodeEventType.Enter;
-            LastEventFrame = Time.frameCount;
-            LastEventTime = Time.time;
-        }
+        // ==========================================================
+        // ★ 이벤트 기록 함수들 (Enter / Update / Exit)
+        // ==========================================================
+#if UNITY_EDITOR
+        private void MarkEnter() => EnteredThisFrame = true; // ← Viewer 에서 Enter 아이콘 표시 가능
+        private void MarkUpdate() => UpdatedThisFrame = true; // ← Running 아이콘 표시 가능
+        private void MarkExit() => ExitedThisFrame = true; // ← Success/Failure 아이콘 표시 가능
+        
+        private static readonly BindingFlags FLAGS =
+            BindingFlags.NonPublic | BindingFlags.Instance;
 
-        protected void MarkUpdate()
+        public List<Node> GetChildren()
         {
-            LastEvent = NodeEventType.Update;
-            LastEventFrame = Time.frameCount;
-            LastEventTime = Time.time;
-        }
+            FieldInfo field = GetType().GetField("_children", FLAGS);
+            if (field == null)
+                return null;
 
-        protected void MarkExit()
-        {
-            LastEvent = NodeEventType.Exit;
-            LastEventFrame = Time.frameCount;
-            LastEventTime = Time.time;
+            return field.GetValue(this) as List<Node>;
         }
     }
+#endif
 
-    public enum NodeEventType
+    public enum NodeState
     {
-        None,
-        Enter,
-        Update,
-        Exit
+        Success,
+        Failure,
+        Running
     }
 }

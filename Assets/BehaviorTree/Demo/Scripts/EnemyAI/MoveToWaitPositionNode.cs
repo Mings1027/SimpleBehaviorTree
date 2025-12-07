@@ -13,24 +13,26 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
 
         protected override NodeState OnUpdate()
         {
-            if (_ctx.self == null || _ctx.waitPosition == null)
-                return NodeState.Failure;
-
-            // 이동 중에 타겟이 생기면 즉시 실패 → 상위 Selector 가 전투 루프로 전환
+            // 타겟 생기면 WaitParallel 종료 → Combat으로 이동
             if (_ctx.target != null)
                 return NodeState.Failure;
 
-            Vector3 toWait = _ctx.waitPosition.position - _ctx.self.position;
-            float sqrDist = toWait.sqrMagnitude;
+            Vector3 targetPos = _ctx.waitPosition.position;
+            float dist = Vector3.Distance(_ctx.self.position, targetPos);
 
-            if (sqrDist <= 0.01f)
+            // 이동 중
+            if (dist > 0.2f)
             {
-                return NodeState.Success; // 대기 위치 도착
+                _ctx.self.position = Vector3.MoveTowards(
+                    _ctx.self.position,
+                    targetPos,
+                    _ctx.moveSpeed * Time.deltaTime
+                );
+
+                return NodeState.Running;
             }
 
-            Vector3 dir = toWait.normalized;
-            _ctx.self.position += dir * (_ctx.moveSpeed * Time.deltaTime);
-
+            // 도착했어도 계속 Running → Idle 유지 상태
             return NodeState.Running;
         }
     }

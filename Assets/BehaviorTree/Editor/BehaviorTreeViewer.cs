@@ -18,11 +18,7 @@ public class BehaviorTreeViewer : EditorWindow
 
     private float currentY;
 
-    // ──────────────────────────────────────────────────────────────
-    //  depth → 세로선 최소Y / 최대Y 저장 (트리가 끊기지 않도록)
-    // ──────────────────────────────────────────────────────────────
-    private Dictionary<int, float> verticalMin = new();
-    private Dictionary<int, float> verticalMax = new();
+    private Dictionary<Node, Rect> nodeRects = new();
 
     [MenuItem("Window/BehaviorTree/Tree Viewer")]
     public static void Open()
@@ -35,6 +31,7 @@ public class BehaviorTreeViewer : EditorWindow
         iconRunning = EditorGUIUtility.IconContent("d_WaitSpin00").image as Texture2D;
         iconSuccess = EditorGUIUtility.IconContent("TestPassed").image as Texture2D;
         iconFailure = EditorGUIUtility.IconContent("TestFailed").image as Texture2D;
+
         EditorApplication.update += Repaint;
     }
 
@@ -63,149 +60,120 @@ public class BehaviorTreeViewer : EditorWindow
         GUILayout.Space(10);
 
         currentY = 20f;
-        verticalMin.Clear();
-        verticalMax.Clear();
+        nodeRects.Clear();
 
-        DrawNodeRecursive(controller.RootNode, 0, true);
-
-        DrawAllVerticalLines();
+        DrawNodeRecursive(controller.RootNode, 0);
     }
 
     // =====================================================================
-    // 재귀적으로 노드 그리기
+    // 노드 재귀 출력
     // =====================================================================
-    private void DrawNodeRecursive(Node node, int depth, bool isLastChild)
+    private void DrawNodeRecursive(Node node, int depth)
     {
         float x = 20 + depth * indentWidth;
         Rect rect = new Rect(x, currentY, nodeWidth, nodeHeight);
 
+        nodeRects[node] = rect;
+
         DrawNodeBox(rect, node);
-        DrawNodeIcon(rect, node);
-
-        // ───────────────────────────────
-        // 세로선 범위 갱신
-        // ───────────────────────────────
-        if (!verticalMin.ContainsKey(depth))
-            verticalMin[depth] = rect.center.y;
-        verticalMax[depth] = rect.center.y;
-
-        // ───────────────────────────────
-        // 부모와 연결하는 가로선
-        // ───────────────────────────────
-        if (depth > 0)
-        {
-            Handles.color = Color.gray;
-            Handles.DrawLine(
-                new Vector2(rect.x - 10, rect.center.y),
-                new Vector2(rect.x, rect.center.y)
-            );
-        }
+        DrawNodeIcons(rect, node);
 
         currentY += nodeHeight + verticalSpacing;
 
-        // 자식 얻기
-        var children = GetChildren(node);
+        var children = node.GetChildren();
         if (children == null) return;
 
-        for (int i = 0; i < children.Count; i++)
+        foreach (var child in children)
         {
-            bool childIsLast = (i == children.Count - 1);
-            DrawNodeRecursive(children[i], depth + 1, childIsLast);
+            DrawNodeRecursive(child, depth + 1);
+            DrawConnection(node, child, depth);
         }
     }
 
-
     // =====================================================================
-    // 한 depth에 대해 ∣ 세로선 전체 그리기
+    // 부모 → 자식 직각 연결선
     // =====================================================================
-    private void DrawAllVerticalLines()
+    private void DrawConnection(Node parent, Node child, int depth)
     {
+        Rect p = nodeRects[parent];
+        Rect c = nodeRects[child];
+
+        float baseX = 20 + depth * indentWidth;      // 부모 들여쓰기 기준
+        float verticalX = baseX - 10;                // 세로선 위치
+
+        float parentY = p.center.y;
+        float childY = c.center.y;
+
         Handles.color = Color.gray;
 
-        foreach (var kv in verticalMin)
-        {
-            int depth = kv.Key;
-            float minY = kv.Value;
-            float maxY = verticalMax[depth];
+        // 부모 → 세로선까지 가로선
+        Handles.DrawLine(
+            new Vector2(baseX, parentY),
+            new Vector2(verticalX, parentY)
+        );
 
-            float x = 20 + depth * indentWidth - 10;
+        // 세로선 (부모→자식)
+        Handles.DrawLine(
+            new Vector2(verticalX, parentY),
+            new Vector2(verticalX, childY)
+        );
 
-            Handles.DrawLine(
-                new Vector2(x, minY),
-                new Vector2(x, maxY)
-            );
-        }
+        // 세로선 → 자식 박스까지 가로선
+        Handles.DrawLine(
+            new Vector2(verticalX, childY),
+            new Vector2(baseX + indentWidth, childY)
+        );
     }
 
-    // =====================================================================
-    // 노드 UI
-    // =====================================================================
+    // 박스 그리기
     private void DrawNodeBox(Rect rect, Node node)
     {
-        GUIStyle style = new GUIStyle(GUI.skin.box);
-        style.alignment = TextAnchor.MiddleLeft;
-        style.normal.textColor = Color.white;
+        GUIStyle style = new GUIStyle(GUI.skin.box)
+        {
+            alignment = TextAnchor.MiddleLeft,
+            normal = { textColor = Color.white }
+        };
         GUI.Box(rect, node.GetType().Name, style);
     }
 
-    private void DrawNodeIcon(Rect rect, Node node)
+    // 아이콘 여러 개 표시
+    private void DrawNodeIcons(Rect rect, Node node)
     {
-        Texture2D icon = GetNodeIcon(node);
-        if (icon == null) return;
+        var icons = GetNodeIcons(node);
+        if (icons.Count == 0) return;
 
-        float size = 18f;
+        float size = 16f;
+        float spacing = 2f;
 
-        Rect iconRect = new Rect(
-            rect.xMax - size - 4,
-            rect.y + (rect.height - size) * 0.5f,
-            size, size
-        );
+        for (int i = 0; i < icons.Count; i++)
+        {
+            int index = icons.Count - 1 - i;
 
-        GUI.DrawTexture(iconRect, icon);
+            Rect r = new Rect(
+                rect.xMax - size - 4 - (i * (size + spacing)),
+                rect.y + (rect.height - size) * 0.5f,
+                size, size
+            );
+            GUI.DrawTexture(r, icons[index]);
+        }
     }
 
-    private Texture2D GetNodeIcon(Node node)
+    // 이벤트 기반 아이콘 구성
+    private List<Texture2D> GetNodeIcons(Node node)
     {
-        float now = Time.time;
+        List<Texture2D> icons = new();
 
-        if (node.LastEvent == NodeEventType.Update &&
-            node.LastEventFrame == Time.frameCount)
-            return iconRunning;
+        if (node.UpdatedThisFrame)
+            icons.Add(iconRunning);
 
-        if (node.LastEvent == NodeEventType.Exit &&
-            now - node.LastEventTime < 0.12f)
+        if (node.ExitedThisFrame)
         {
-            return node.LastResult switch
-            {
-                NodeState.Success => iconSuccess,
-                NodeState.Failure => iconFailure,
-                _ => null
-            };
+            if (node.LastResult == NodeState.Success)
+                icons.Add(iconSuccess);
+            else
+                icons.Add(iconFailure);
         }
 
-        return null;
-    }
-
-    // =====================================================================
-    // 자식 찾기
-    // =====================================================================
-    private List<Node> GetChildren(Node node)
-    {
-        if (node is SequenceNode seq)
-            return (List<Node>)typeof(SequenceNode)
-                .GetField("_children", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.GetValue(seq);
-
-        if (node is SelectorNode sel)
-            return (List<Node>)typeof(SelectorNode)
-                .GetField("_children", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.GetValue(sel);
-
-        if (node is ParallelNode par)
-            return (List<Node>)typeof(ParallelNode)
-                .GetField("_children", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.GetValue(par);
-
-        return null;
+        return icons;
     }
 }

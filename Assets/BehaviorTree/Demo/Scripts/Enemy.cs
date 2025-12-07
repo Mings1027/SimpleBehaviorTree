@@ -32,72 +32,30 @@ public class Enemy : MonoBehaviour
     {
         blackboard.self = transform;
         blackboard.waitPosition = waitTransform;
-        blackboard.attackCooldown.StartCooldown();
 
-        var root = new ParallelNode(
-            ParallelPolicy.And,
+        var root = new SelectorNode();
 
-            // 항상 타겟 갱신
-            new FindTargetNode(blackboard),
-            new SelectorNode(
-                // 1) 쿨타임 중 → 무조건 제자리 유지
-                new CooldownWaitNode(blackboard),
-
-                // 2) 타겟이 있으면 전투 시퀀스
-                new SequenceNode(
-                    new HasTargetNode(blackboard),
-                    new SelectorNode(
-                        // 공격 시도
-                        new SequenceNode(
-                            new IsInAttackRangeNode(blackboard),
-                            new CanAttackNode(blackboard),
-                            new AttackNode(blackboard)
-                        ),
-
-                        // 공격 불가능 → 이동
-                        new MoveToTargetNode(blackboard)
-                    )
-                ),
-
-                // 3) 타겟이 없으면 대기 위치로 이동
-                new MoveToWaitPositionNode(blackboard)
-            )
-        );
-
-        return root;
-    }
-
-    private Node CreateTreeTest()
-    {
-        blackboard.self = transform;
-        blackboard.waitPosition = waitTransform;
-        blackboard.attackCooldown.StartCooldown();
-
-        var root = new ParallelNode(ParallelPolicy.And);
-        root.AddChild(new FindTargetNode(blackboard));
-
-        var behaviorSelector = new SelectorNode();
-        root.AddChild(behaviorSelector);
-
-        behaviorSelector.AddChild(new CooldownWaitNode(blackboard));
-
-        var fightSequence = new SequenceNode();
-        behaviorSelector.AddChild(fightSequence);
-
-        fightSequence.AddChild(new HasTargetNode(blackboard));
-
-        var attackOrMoveSelector = new SelectorNode();
-        fightSequence.AddChild(attackOrMoveSelector);
-
+        var combatSequence = new SequenceNode();
+        var detectParallel = new ParallelNode(ParallelPolicy.And);
+        var attackSelector  = new SelectorNode();
         var attackSequence = new SequenceNode();
+        
+        root.AddChild(combatSequence);
+        root.AddChild(new MoveToWaitPositionNode(blackboard));
+
+        combatSequence.AddChild(detectParallel);
+        combatSequence.AddChild(new HasTargetNode(blackboard));
+        combatSequence.AddChild(attackSelector);
+
+        detectParallel.AddChild(new CooldownWaitNode(blackboard));
+        detectParallel.AddChild(new FindTargetNode(blackboard));
+
+        attackSelector.AddChild(attackSequence);
+        attackSelector.AddChild(new MoveToTargetNode(blackboard));
+
         attackSequence.AddChild(new IsInAttackRangeNode(blackboard));
         attackSequence.AddChild(new CanAttackNode(blackboard));
         attackSequence.AddChild(new AttackNode(blackboard));
-        attackOrMoveSelector.AddChild(attackSequence);
-
-        attackOrMoveSelector.AddChild(new MoveToTargetNode(blackboard));
-
-        behaviorSelector.AddChild(new MoveToWaitPositionNode(blackboard));
 
         return root;
     }

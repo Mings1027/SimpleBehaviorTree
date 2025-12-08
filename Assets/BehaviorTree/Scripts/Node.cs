@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Reflection;
-
 namespace BehaviorTree
 {
     public abstract class Node
@@ -61,20 +58,8 @@ namespace BehaviorTree
         private void MarkEnter() => EnteredThisFrame = true; // ← Viewer 에서 Enter 아이콘 표시 가능
         private void MarkUpdate() => UpdatedThisFrame = true; // ← Running 아이콘 표시 가능
         private void MarkExit() => ExitedThisFrame = true; // ← Success/Failure 아이콘 표시 가능
-        
-        private static readonly BindingFlags FLAGS =
-            BindingFlags.NonPublic | BindingFlags.Instance;
-
-        public List<Node> GetChildren()
-        {
-            FieldInfo field = GetType().GetField("_children", FLAGS);
-            if (field == null)
-                return null;
-
-            return field.GetValue(this) as List<Node>;
-        }
-    }
 #endif
+    }
 
     public enum NodeState
     {

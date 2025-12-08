@@ -1,13 +1,14 @@
-using System.Collections.Generic;
 using UnityEngine;
 using BehaviorTree;
 
 public class BehaviorTreeController : MonoBehaviour
 {
     private Node _rootNode;
+#if UNITY_EDITOR
     public Node RootNode => _rootNode;
+#endif
 
-    void Update()
+    private void Update()
     {
         if (_rootNode == null)
             return;
@@ -23,24 +24,26 @@ public class BehaviorTreeController : MonoBehaviour
         _rootNode = rootNode;
     }
 
+#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         _rootNode?.DrawGizmos();
     }
 
-#if UNITY_EDITOR
-    private void ResetFlags(Node node)
+    private static void ResetFlags(Node node)
     {
         node.EnteredThisFrame = false;
         node.UpdatedThisFrame = false;
         node.ExitedThisFrame = false;
 
-        var children = node.GetChildren();
-        if (children == null)
-            return;
-
-        foreach (var child in children)
-            ResetFlags(child);
+        if (node is CompositeNode comp)
+        {
+            for (var i = 0; i < comp.Children.Count; i++)
+            {
+                var child = comp.Children[i];
+                ResetFlags(child);
+            }
+        }
     }
 #endif
 }

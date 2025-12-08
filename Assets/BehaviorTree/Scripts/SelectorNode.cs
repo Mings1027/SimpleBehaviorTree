@@ -1,25 +1,22 @@
-using System.Collections.Generic;
 using BehaviorTree;
 
-public class SelectorNode : Node
+public class SelectorNode : CompositeNode
 {
-    private readonly List<Node> _children = new();
-
     public SelectorNode(params Node[] children)
     {
         if (children == null) return;
-        _children.AddRange(children);
+        this.children.AddRange(children);
     }
 
-    public void AddChild(Node node) => _children.Add(node);
+    public void AddChild(Node node) => children.Add(node);
 
     protected override NodeState OnUpdate()
     {
-        foreach (var child in _children)
+        foreach (var child in children)
         {
             var result = child.Update();
-            if (result != NodeState.Failure)
-                return result;
+            if (result == NodeState.Failure) continue;
+            return result;
         }
 
         return NodeState.Failure;
@@ -27,7 +24,7 @@ public class SelectorNode : Node
 
     public override void DrawGizmos()
     {
-        foreach (var child in _children)
+        foreach (var child in children)
         {
             child.DrawGizmos();
         }

@@ -1,17 +1,14 @@
-using System.Collections.Generic;
-
 namespace BehaviorTree
 {
-    public class ParallelNode : Node
+    public class ParallelNode : CompositeNode
     {
-        private readonly List<Node> _children = new();
         private readonly ParallelPolicy _policy;
 
         public ParallelNode(ParallelPolicy policy, params Node[] children)
         {
             _policy = policy;
-            if (children == null) return;
-            _children.AddRange(children);
+            if (children != null)
+                this.children.AddRange(children);
         }
 
         public ParallelNode(ParallelPolicy policy)
@@ -19,46 +16,55 @@ namespace BehaviorTree
             _policy = policy;
         }
 
-        public void AddChild(Node node)
-        {
-            _children.Add(node);
-        }
+        public void AddChild(Node node) => children.Add(node);
 
         protected override NodeState OnUpdate()
         {
-            bool anySuccess = false;
+            return _policy switch
+            {
+                ParallelPolicy.And => UpdateAnd(),
+                ParallelPolicy.Or  => UpdateOr(),
+                _ => NodeState.Running
+            };
+        }
+
+        // -------------------------------------------------------------------
+        // AND 정책 (원래 로직과 동일)
+        // - 하나라도 Failure → Failure
+        // - 모두 Success → Success
+        // - 아니면 Running
+        // -------------------------------------------------------------------
+        private NodeState UpdateAnd()
+        {
             bool allSuccess = true;
 
-            foreach (var child in _children)
+            foreach (var child in children)
             {
                 var result = child.Update();
 
-                if (_policy == ParallelPolicy.And)
-                {
-                    // AND 정책: 하나라도 Fail → Fail
-                    if (result == NodeState.Failure)
-                        return NodeState.Failure;
+                if (result == NodeState.Failure)
+                    return NodeState.Failure;
 
-                    if (result != NodeState.Success)
-                        allSuccess = false;
-                }
-                else
-                {
-                    // OR 정책: 하나라도 성공하면 성공
-                    if (result == NodeState.Success)
-                        anySuccess = true;
-                }
+                if (result != NodeState.Success)
+                    allSuccess = false;
             }
 
-            // 정책별 최종 정리
-            if (_policy == ParallelPolicy.And)
-            {
-                return allSuccess ? NodeState.Success : NodeState.Running;
-            }
+            return allSuccess ? NodeState.Success : NodeState.Running;
+        }
 
-            if (_policy == ParallelPolicy.Or)
+        // -------------------------------------------------------------------
+        // OR 정책 (원래 로직과 완전히 동일)
+        // - 하나라도 Success → Success
+        // - 아니면 Running (Failure 고려 X)
+        // -------------------------------------------------------------------
+        private NodeState UpdateOr()
+        {
+            foreach (var child in children)
             {
-                return anySuccess ? NodeState.Success : NodeState.Running;
+                var result = child.Update();
+
+                if (result == NodeState.Success)
+                    return NodeState.Success;
             }
 
             return NodeState.Running;
@@ -67,7 +73,7 @@ namespace BehaviorTree
 
     public enum ParallelPolicy
     {
-        Or, // 하나라도 Success → Success
-        And // 모든 노드가 Success → Success
+        Or,
+        And
     }
 }

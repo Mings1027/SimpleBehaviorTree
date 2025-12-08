@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Reflection;
 using BehaviorTree;
 
 public class BehaviorTreeViewer : EditorWindow
@@ -80,13 +81,14 @@ public class BehaviorTreeViewer : EditorWindow
 
         currentY += nodeHeight + verticalSpacing;
 
-        var children = node.GetChildren();
-        if (children == null) return;
-
-        foreach (var child in children)
+        if (node is CompositeNode comp)
         {
-            DrawNodeRecursive(child, depth + 1);
-            DrawConnection(node, child, depth);
+            for (var i = 0; i < comp.Children.Count; i++)
+            {
+                var child = comp.Children[i];
+                DrawNodeRecursive(child, depth + 1);
+                DrawConnection(node, child, depth);
+            }
         }
     }
 
@@ -98,8 +100,8 @@ public class BehaviorTreeViewer : EditorWindow
         Rect p = nodeRects[parent];
         Rect c = nodeRects[child];
 
-        float baseX = 20 + depth * indentWidth;      // 부모 들여쓰기 기준
-        float verticalX = baseX - 10;                // 세로선 위치
+        float baseX = 20 + depth * indentWidth; // 부모 들여쓰기 기준
+        float verticalX = baseX - 10; // 세로선 위치
 
         float parentY = p.center.y;
         float childY = c.center.y;
@@ -175,5 +177,16 @@ public class BehaviorTreeViewer : EditorWindow
         }
 
         return icons;
+    }
+
+    private static readonly BindingFlags FLAGS =
+        BindingFlags.NonPublic | BindingFlags.Instance;
+
+    public static List<Node> GetChildren(Node node)
+    {
+        var field = node.GetType().GetField("_children", FLAGS);
+        if (field == null) return null;
+
+        return field.GetValue(node) as List<Node>;
     }
 }

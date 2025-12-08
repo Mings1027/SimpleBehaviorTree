@@ -13,6 +13,20 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
 
         protected override NodeState OnUpdate()
         {
+            // 1. 이미 타겟이 있으면 그대로 유지 (여기선 절대 안 바꿈)
+            if (_ctx.target != null)
+            {
+                // 만약 죽었거나 비활성화되면 여기서만 지워주고 새로 찾기
+                if (!_ctx.target.gameObject.activeSelf)
+                {
+                    _ctx.target = null;
+                }
+                else
+                {
+                    return NodeState.Success;
+                }
+            }
+
             int count = Physics.OverlapSphereNonAlloc(
                 _ctx.self.position,
                 _ctx.detectionRange,

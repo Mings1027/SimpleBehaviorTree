@@ -1,25 +1,22 @@
-using System.Collections.Generic;
 using BehaviorTree;
 
-public class SequenceNode : Node
+public class SequenceNode : CompositeNode
 {
-    private readonly List<Node> _children = new();
-
     public SequenceNode(params Node[] children)
     {
         if (children == null) return;
-        _children.AddRange(children);
+        this.children.AddRange(children);
     }
 
-    public void AddChild(Node node) => _children.Add(node);
+    public void AddChild(Node node) => children.Add(node);
 
     protected override NodeState OnUpdate()
     {
-        foreach (var child in _children)
+        foreach (var child in children)
         {
             var result = child.Update();
-            if (result != NodeState.Success)
-                return result;
+            if (result == NodeState.Success) continue;
+            return result;
         }
 
         return NodeState.Success;
@@ -27,7 +24,7 @@ public class SequenceNode : Node
 
     public override void DrawGizmos()
     {
-        foreach (var child in _children)
+        foreach (var child in children)
         {
             child.DrawGizmos();
         }

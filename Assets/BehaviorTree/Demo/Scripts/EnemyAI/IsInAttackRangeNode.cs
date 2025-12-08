@@ -1,6 +1,3 @@
-using BehaviorTree;
-using UnityEngine;
-
 namespace BehaviorTree.Demo.Scripts.EnemyAI
 {
     public class IsInAttackRangeNode : Node

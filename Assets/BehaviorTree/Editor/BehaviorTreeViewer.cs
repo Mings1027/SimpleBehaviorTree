@@ -1,7 +1,6 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
-using System.Reflection;
 using BehaviorTree;
 
 public class BehaviorTreeViewer : EditorWindow
@@ -19,7 +18,8 @@ public class BehaviorTreeViewer : EditorWindow
 
     private float currentY;
 
-    private Dictionary<Node, Rect> nodeRects = new();
+    // 노드 박스 위치
+    private readonly Dictionary<Node, Rect> nodeRects = new();
 
     [MenuItem("Window/BehaviorTree/Tree Viewer")]
     public static void Open()
@@ -66,9 +66,9 @@ public class BehaviorTreeViewer : EditorWindow
         DrawNodeRecursive(controller.RootNode, 0);
     }
 
-    // =====================================================================
-    // 노드 재귀 출력
-    // =====================================================================
+    // ------------------------------------------------------------
+    // 트리 재귀 출력
+    // ------------------------------------------------------------
     private void DrawNodeRecursive(Node node, int depth)
     {
         float x = 20 + depth * indentWidth;
@@ -83,51 +83,51 @@ public class BehaviorTreeViewer : EditorWindow
 
         if (node is CompositeNode comp)
         {
-            for (var i = 0; i < comp.Children.Count; i++)
+            var children = comp.Children;
+            for (int i = 0; i < children.Count; i++)
             {
-                var child = comp.Children[i];
+                var child = children[i];
                 DrawNodeRecursive(child, depth + 1);
                 DrawConnection(node, child, depth);
             }
         }
     }
 
-    // =====================================================================
+    // ------------------------------------------------------------
     // 부모 → 자식 직각 연결선
-    // =====================================================================
+    // ------------------------------------------------------------
     private void DrawConnection(Node parent, Node child, int depth)
     {
         Rect p = nodeRects[parent];
         Rect c = nodeRects[child];
 
-        float baseX = 20 + depth * indentWidth; // 부모 들여쓰기 기준
-        float verticalX = baseX - 10; // 세로선 위치
+        float baseX = 20 + depth * indentWidth;
+        float verticalX = baseX - 10;
 
         float parentY = p.center.y;
         float childY = c.center.y;
 
         Handles.color = Color.gray;
 
-        // 부모 → 세로선까지 가로선
         Handles.DrawLine(
             new Vector2(baseX, parentY),
             new Vector2(verticalX, parentY)
         );
 
-        // 세로선 (부모→자식)
         Handles.DrawLine(
             new Vector2(verticalX, parentY),
             new Vector2(verticalX, childY)
         );
 
-        // 세로선 → 자식 박스까지 가로선
         Handles.DrawLine(
             new Vector2(verticalX, childY),
             new Vector2(baseX + indentWidth, childY)
         );
     }
 
-    // 박스 그리기
+    // ------------------------------------------------------------
+    // 박스
+    // ------------------------------------------------------------
     private void DrawNodeBox(Rect rect, Node node)
     {
         GUIStyle style = new GUIStyle(GUI.skin.box)
@@ -135,58 +135,42 @@ public class BehaviorTreeViewer : EditorWindow
             alignment = TextAnchor.MiddleLeft,
             normal = { textColor = Color.white }
         };
+
         GUI.Box(rect, node.GetType().Name, style);
     }
 
-    // 아이콘 여러 개 표시
+    // ------------------------------------------------------------
+    // 아이콘 표시
+    // ------------------------------------------------------------
     private void DrawNodeIcons(Rect rect, Node node)
     {
-        var icons = GetNodeIcons(node);
-        if (icons.Count == 0) return;
-
         float size = 16f;
-        float spacing = 2f;
 
-        for (int i = 0; i < icons.Count; i++)
+        // 이번 프레임에 Update 안 된 노드는 아무 아이콘도 안 그림
+        if (!controller.UpdatedThisFrame.Contains(node))
+            return;
+
+        if (!controller.LastResults.TryGetValue(node, out var state))
+            return;
+
+        // Running 아이콘
+        if (state == NodeState.Running)
         {
-            int index = icons.Count - 1 - i;
-
-            Rect r = new Rect(
-                rect.xMax - size - 4 - (i * (size + spacing)),
+            var r = new Rect(
+                rect.xMax - size - 4,
                 rect.y + (rect.height - size) * 0.5f,
-                size, size
-            );
-            GUI.DrawTexture(r, icons[index]);
+                size, size);
+            GUI.DrawTexture(r, iconRunning);
         }
-    }
-
-    // 이벤트 기반 아이콘 구성
-    private List<Texture2D> GetNodeIcons(Node node)
-    {
-        List<Texture2D> icons = new();
-
-        if (node.UpdatedThisFrame)
-            icons.Add(iconRunning);
-
-        if (node.ExitedThisFrame)
+        else
         {
-            if (node.LastResult == NodeState.Success)
-                icons.Add(iconSuccess);
-            else
-                icons.Add(iconFailure);
+            // Success / Failure 아이콘
+            Texture2D tex = state == NodeState.Success ? iconSuccess : iconFailure;
+            var r = new Rect(
+                rect.xMax - size - 4,
+                rect.y + (rect.height - size) * 0.5f,
+                size, size);
+            GUI.DrawTexture(r, tex);
         }
-
-        return icons;
-    }
-
-    private static readonly BindingFlags FLAGS =
-        BindingFlags.NonPublic | BindingFlags.Instance;
-
-    public static List<Node> GetChildren(Node node)
-    {
-        var field = node.GetType().GetField("_children", FLAGS);
-        if (field == null) return null;
-
-        return field.GetValue(node) as List<Node>;
     }
 }

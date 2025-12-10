@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace BehaviorTree.Demo.Scripts.EnemyAI
 {
     public class TargetValidNode : Node
@@ -13,15 +15,12 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
         {
             var target = _ctx.target;
 
-            // 타겟 없음 → Combat 불가
-            if (target == null)
-                return NodeState.Failure;
+            if (target == null) return NodeState.Failure;
 
-            // 타겟이 너무 멀어짐 → Combat 종료
-            float distSqr = (target.position - _ctx.self.position).sqrMagnitude;
-            if (distSqr > _ctx.detectionRange * _ctx.detectionRange)
+            var distance = Vector3.Distance(target.position, _ctx.self.position);
+            if (distance > _ctx.detectionRange)
             {
-                _ctx.target = null; // ← 타겟 제거!
+                _ctx.target = null;
                 return NodeState.Failure;
             }
 

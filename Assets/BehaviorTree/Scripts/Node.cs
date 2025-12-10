@@ -1,44 +1,29 @@
+using System;
+
 namespace BehaviorTree
 {
     public abstract class Node
     {
         private bool _started;
 
-#if UNITY_EDITOR
-        // 노드 결과 (Success / Failure / Running)
-        public NodeState LastResult { get; private set; } = NodeState.Running;
+        // 이 이벤트만으로 누가 언제 Update됐는지 알 수 있음
+        public static event Action<Node, NodeState> OnNodeUpdated;
 
-        public bool EnteredThisFrame { get; internal set; }
-        public bool UpdatedThisFrame { get; internal set; }
-        public bool ExitedThisFrame { get; internal set; }
-#endif
         public NodeState Update()
         {
-            // Enter 처리
             if (!_started)
             {
-#if UNITY_EDITOR
-                MarkEnter();
-#endif
                 OnStart();
                 _started = true;
             }
 
-            // Update 처리
-#if UNITY_EDITOR
-            MarkUpdate();
-#endif
             NodeState result = OnUpdate();
-#if UNITY_EDITOR
-            LastResult = result;
-#endif
 
-            // Exit 처리
+            // 컨트롤러/뷰어는 이 이벤트만 구독하면 됨
+            OnNodeUpdated?.Invoke(this, result);
+
             if (result != NodeState.Running)
             {
-#if UNITY_EDITOR
-                MarkExit();
-#endif
                 OnEnd();
                 _started = false;
             }
@@ -50,15 +35,6 @@ namespace BehaviorTree
         protected abstract NodeState OnUpdate();
         protected virtual void OnEnd() { }
         public virtual void DrawGizmos() { }
-
-        // ==========================================================
-        // ★ 이벤트 기록 함수들 (Enter / Update / Exit)
-        // ==========================================================
-#if UNITY_EDITOR
-        private void MarkEnter() => EnteredThisFrame = true; // ← Viewer 에서 Enter 아이콘 표시 가능
-        private void MarkUpdate() => UpdatedThisFrame = true; // ← Running 아이콘 표시 가능
-        private void MarkExit() => ExitedThisFrame = true; // ← Success/Failure 아이콘 표시 가능
-#endif
     }
 
     public enum NodeState

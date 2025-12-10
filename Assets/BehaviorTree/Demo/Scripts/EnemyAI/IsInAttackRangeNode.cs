@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace BehaviorTree.Demo.Scripts.EnemyAI
 {
     public class IsInAttackRangeNode : Node
@@ -14,10 +16,9 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
             if (_ctx.self == null || _ctx.target == null)
                 return NodeState.Failure;
 
-            float sqrDist = (_ctx.target.position - _ctx.self.position).sqrMagnitude;
-            float sqrRange = _ctx.attackRange * _ctx.attackRange;
+            var distance = Vector3.Distance(_ctx.self.position, _ctx.target.position);
 
-            return sqrDist <= sqrRange ? NodeState.Success : NodeState.Failure;
+            return distance <= _ctx.attackRange ? NodeState.Success : NodeState.Failure;
         }
     }
 }

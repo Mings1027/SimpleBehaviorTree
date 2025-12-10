@@ -1,3 +1,4 @@
+using System;
 using BehaviorTree;
 using BehaviorTree.Demo.Scripts.EnemyAI;
 using UnityEngine;
@@ -14,9 +15,20 @@ public class Enemy : MonoBehaviour
         _treeController = GetComponent<BehaviorTreeController>();
     }
 
+    private void OnEnable()
+    {
+        EnemyManager.AddEnemy(this);
+        
+    }
+
     private void Start()
     {
         _treeController.CreateTree(CreateTree());
+    }
+
+    private void OnDisable()
+    {
+        EnemyManager.RemoveEnemy(this);
     }
 
     private void OnDrawGizmos()

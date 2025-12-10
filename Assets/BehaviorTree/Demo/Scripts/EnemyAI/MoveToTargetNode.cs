@@ -6,8 +6,6 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
     {
         private readonly AIContext _ctx;
 
-        // 타겟을 완전히 놓쳤다고 판단하는 거리 배수
-        // detectionRange * LOST_MULT 이상 멀어지면 타겟 포기
         private const float LOST_MULT = 1.2f;
 
         public MoveToTargetNode(AIContext ctx)
@@ -28,25 +26,58 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
             float sqrAttackRange = _ctx.attackRange   * _ctx.attackRange;
             float sqrLostRange   = _ctx.detectionRange * _ctx.detectionRange * LOST_MULT * LOST_MULT;
 
-            // 1) 타겟을 완전히 잃어버린 경우만 포기
+            // 1) 타겟을 완전히 잃어버린 경우
             if (sqrDist > sqrLostRange)
             {
                 _ctx.target = null;
                 return NodeState.Failure;
             }
 
-            // 2) 공격 사거리 안이면 추적 완료 (공격 브랜치가 이어서 처리)
+            // 2) 공격 사거리 안이면 이동 종료
             if (sqrDist <= sqrAttackRange)
                 return NodeState.Success;
 
-            // 3) 그 외에는 계속 추적
+            // 3) 타겟 추적 + Separation 적용
             if (sqrDist > 0.0001f)
             {
-                Vector3 dir = toTarget.normalized;
-                _ctx.self.position += dir * (_ctx.moveSpeed * Time.deltaTime);
+                // 타겟 방향
+                Vector3 moveDir = toTarget.normalized;
+
+                // 가까운 적 회피 벡터
+                Vector3 separation = GetSeparationForce();
+
+                // 두 벡터 합성
+                Vector3 finalDir = (moveDir + separation).normalized;
+
+                _ctx.self.position += finalDir * (_ctx.moveSpeed * Time.deltaTime);
             }
 
             return NodeState.Running;
         }
+
+
+        private Vector3 GetSeparationForce()
+        {
+            Vector3 force = Vector3.zero;
+            float desiredDistance = 2.0f;      // 서로 최소 유지 거리
+            float pushStrength = 2.0f;         // 밀어내는 힘
+
+            foreach (var other in EnemyManager.allEnemies)
+            {
+                if (other == null || other == _ctx.self) continue;
+
+                float dist = Vector3.Distance(other.transform.position, _ctx.self.position);
+                if (dist < desiredDistance && dist > 0.0001f)
+                {
+                    Vector3 pushDir = (_ctx.self.position - other.transform.position).normalized;
+                    float scale = (desiredDistance - dist) / desiredDistance;
+
+                    force += pushDir * scale * pushStrength;
+                }
+            }
+
+            return force;
+        }
+
     }
 }

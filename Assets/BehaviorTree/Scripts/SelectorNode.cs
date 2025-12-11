@@ -1,32 +1,47 @@
-using BehaviorTree;
+using System.Collections.Generic;
 
-public class SelectorNode : CompositeNode
+namespace BehaviorTree
 {
-    public SelectorNode(params Node[] children)
+    public class SelectorNode : CompositeNode
     {
-        if (children == null) return;
-        this.children.AddRange(children);
-    }
+        private int _currentIndex;
 
-    public void AddChild(Node node) => children.Add(node);
-
-    protected override NodeState OnUpdate()
-    {
-        foreach (var child in children)
+        public void AddChild(Node node)
         {
-            var result = child.Update();
-            if (result == NodeState.Failure) continue;
-            return result;
+            children.Add(node);
         }
 
-        return NodeState.Failure;
-    }
-
-    public override void DrawGizmos()
-    {
-        foreach (var child in children)
+        protected override NodeState OnUpdate()
         {
-            child.DrawGizmos();
+            while (_currentIndex < children.Count)
+            {
+                var result = children[_currentIndex].Update();
+
+                switch (result)
+                {
+                    case NodeState.Running:
+                        return NodeState.Running;
+                    case NodeState.Success:
+                        _currentIndex = 0; // 성공 시 전체 리셋
+                        return NodeState.Success;
+                    case NodeState.Failure:
+                        _currentIndex++;
+                        break;
+                }
+            }
+
+            _currentIndex = 0;
+            return NodeState.Failure;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            _currentIndex = 0;
+            for (int i = 0; i < children.Count; i++)
+            {
+                children[i].Reset();
+            }
         }
     }
 }

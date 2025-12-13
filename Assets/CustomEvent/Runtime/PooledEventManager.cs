@@ -7,7 +7,9 @@ namespace CustomEvent
     internal class PooledEventManager : MonoBehaviour
     {
         internal static PooledEventManager Instance;
-
+#if UNITY_EDITOR
+        private List<ColdData> _used; // 사용 중인 ColdData 추적
+#endif
         private List<ColdData> _pool;
         private int _poolCapacity = 128;
 
@@ -31,6 +33,9 @@ namespace CustomEvent
         private void Init()
         {
             _pool = new List<ColdData>(_poolCapacity);
+#if UNITY_EDITOR
+            _used = new List<ColdData>(_poolCapacity);
+#endif
             for (var i = 0; i < _poolCapacity; i++)
             {
                 var cold = new ColdData();
@@ -52,6 +57,11 @@ namespace CustomEvent
             var idx = _pool.Count - 1;
             var cold = _pool[idx];
             _pool.RemoveAt(idx);
+
+#if UNITY_EDITOR
+            _used.Add(cold); // 사용 중 목록에 추가 
+#endif
+
             return cold;
         }
 
@@ -59,6 +69,10 @@ namespace CustomEvent
         {
             cold.Clear();
             cold.ManagedData.cold = cold;
+
+#if UNITY_EDITOR
+            _used.Remove(cold); // 사용 중 목록에서 제거 
+#endif
 
             _pool.Add(cold);
         }

@@ -1,6 +1,8 @@
 using System;
+using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Debug = UnityEngine.Debug;
 
 namespace CustomEvent
 {
@@ -15,7 +17,6 @@ namespace CustomEvent
         {
             var cold = PooledEventManager.Instance.GetCold();
             cold.ManagedData.cold = cold;
-            cold.OneShot = false;
             return new PooledEvent { cold = cold };
         }
 
@@ -26,6 +27,19 @@ namespace CustomEvent
                 "You cannot use 'new PooledEvent()'.");
 
             cold.ManagedData.Set(target, action);
+
+#if UNITY_EDITOR
+            cold.DebugTargetObject = target as UnityEngine.Object;
+            cold.DebugInvokeCount = 0;
+
+            var st = new StackTrace(true);
+            var frame = st.GetFrame(1); // Bind를 호출한 쪽
+            if (frame != null)
+            {
+                cold.DebugBindFile = frame.GetFileName();
+                cold.DebugBindLine = frame.GetFileLineNumber();
+            }
+#endif
             return this;
         }
 
@@ -34,42 +48,58 @@ namespace CustomEvent
             Assert.IsTrue(IsValid);
             ref var data = ref cold.ManagedData;
             data.Set(target, action);
+
+#if UNITY_EDITOR
+            cold.DebugTargetObject = target as UnityEngine.Object;
+            cold.DebugInvokeCount = 0;
+
+            var st = new StackTrace(true);
+            var frame = st.GetFrame(1); // Bind를 호출한 쪽
+            if (frame != null)
+            {
+                cold.DebugBindFile = frame.GetFileName();
+                cold.DebugBindLine = frame.GetFileLineNumber();
+            }
+#endif
             return this;
         }
 
-        public PooledEvent OneShot()
-        {
-            Assert.IsTrue(IsValid, "PooledEvent.OneShot() called before Create().");
-            cold.OneShot = true;
-            return this;
-        }
- 
         public void Invoke()
         {
             Assert.IsTrue(IsValid,
                 "PooledEvent.Invoke() called before PooledEvent was created. " +
                 "Use PooledEvent.Create() to create it.");
 
-            cold.Invoker?.Invoke(cold.ManagedData);
+            cold.Dispatch?.Invoke(cold.ManagedData);
 
-            if (!cold.OneShot) return;
-            PooledEventManager.Instance.ReleaseCold(cold);
-            cold = null; // 다시 호출해도 아무 일도 안 일어나도록
+#if UNITY_EDITOR
+            if (cold.Dispatch != null)
+                cold.DebugInvokeCount++;
+#endif
         }
 
         public void InvokeEvent(GameObject go)
         {
             Assert.IsTrue(IsValid);
 
-            cold.InvokeObj = go;
-            cold.Invoker?.Invoke(cold.ManagedData);
+#if UNITY_EDITOR
+            cold.DebugInvokeObj = go;
+#endif
 
-            if (!cold.OneShot) return;
+            cold.DispatchObj?.Invoke(cold.ManagedData, go);
 
+#if UNITY_EDITOR
+            if (cold.DispatchObj != null)
+                cold.DebugInvokeCount++;
+#endif
+        }
+
+        public void Dispose()
+        {
+            if (cold == null) return;
             PooledEventManager.Instance.ReleaseCold(cold);
             cold = null;
         }
-
-        public void Clear() => cold?.Clear();
+ 
     }
 }

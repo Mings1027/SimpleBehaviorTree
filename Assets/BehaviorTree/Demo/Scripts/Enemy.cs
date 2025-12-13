@@ -1,28 +1,37 @@
 using System;
 using BehaviorTree;
 using BehaviorTree.Demo.Scripts.EnemyAI;
+using CustomEvent;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
+    public PooledEvent onHit;
+    public PooledEvent onDeath;
+
+    private int curHealth;
+
     private BehaviorTreeController _treeController;
 
+    [SerializeField] private int maxHealth = 100;
     [SerializeField] private AIContext blackboard;
     [SerializeField] private Transform waitTransform;
 
     private void Awake()
     {
+        onHit = PooledEvent.Create();
+        onDeath = PooledEvent.Create();
         _treeController = GetComponent<BehaviorTreeController>();
     }
 
     private void OnEnable()
     {
         EnemyManager.AddEnemy(this);
-        
     }
 
     private void Start()
     {
+        curHealth = maxHealth;
         _treeController.CreateTree(CreateTree());
     }
 
@@ -140,5 +149,21 @@ public class Enemy : MonoBehaviour
         waitSequence.AddChild(new MoveToWaitPositionNode(blackboard));
 
         return waitSequence;
+    }
+
+    public void ApplyDamage(int amount)
+    {
+        curHealth -= amount;
+        if (curHealth < 0) curHealth = 0;
+
+        // Hit 이벤트 호출
+        onHit.Invoke();
+
+        if (curHealth == 0)
+        {
+            // Death 이벤트 호출
+            onDeath.Invoke();
+            gameObject.SetActive(false);
+        }
     }
 }

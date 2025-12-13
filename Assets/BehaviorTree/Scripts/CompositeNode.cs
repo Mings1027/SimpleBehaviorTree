@@ -6,5 +6,7 @@ namespace BehaviorTree
     {
         protected readonly List<Node> children = new();
         public IReadOnlyList<Node> Children => children;
+        
+        
     }
 }

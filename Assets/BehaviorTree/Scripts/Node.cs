@@ -35,6 +35,8 @@ namespace BehaviorTree
         protected abstract NodeState OnUpdate();
         protected virtual void OnEnd() { }
         public virtual void DrawGizmos() { }
+
+        public virtual void Reset() { }
     }
 
     public enum NodeState

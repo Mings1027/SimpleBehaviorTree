@@ -8,24 +8,38 @@ namespace CustomEvent
 {
     internal class ColdData
     {
-        [CanBeNull] internal Action<PooledEventData> Invoker;
-        [CanBeNull] internal object InvokerCallback;
-        [CanBeNull] internal object InvokeTarget;
+        [CanBeNull] internal object Callback;
 
-        [CanBeNull] internal object InvokeObj;
+        [CanBeNull] internal object CallbackTarget;
+
+        [CanBeNull] internal Action<PooledEventData> Dispatch;
+        [CanBeNull] internal Action<PooledEventData, GameObject> DispatchObj;
 
         internal PooledEventData ManagedData;
 
-        internal bool OneShot;
-
+#if UNITY_EDITOR
+        internal UnityEngine.Object DebugTargetObject; // 어떤 객체가 바인딩됐는지
+        internal GameObject DebugInvokeObj; // InvokeEvent로 전달된 GameObject
+        internal string DebugBindFile; // 어디 파일 Bind됐는지
+        internal int DebugBindLine; // 몇 번째 줄에서 Bind됐는지
+        internal int DebugInvokeCount; // 몇 번 Invoke됐는지
+#endif
         internal void Clear()
         {
-            Invoker = null;
-            InvokerCallback = null;
-            InvokeTarget = null;
-            InvokeObj = null;
+            Dispatch = null;
+            DispatchObj = null;
+            Callback = null;
+            CallbackTarget = null;
+            // CallbackObj = null;
             ManagedData.target = null;
-            OneShot = false;
+
+#if UNITY_EDITOR
+            DebugTargetObject = null;
+            DebugInvokeObj = null;
+            DebugBindFile = null;
+            DebugBindLine = 0;
+            DebugInvokeCount = 0;
+#endif
         }
     }
 
@@ -41,15 +55,15 @@ namespace CustomEvent
 
             Assert.IsNotNull(cold, "PooledEventData.cold is null. Create() / ReleaseCold()에서 cold 연결을 확인하세요.");
 
-            cold.InvokeTarget = target;
-            cold.InvokerCallback = action;
-            cold.Invoker = t =>
+            cold.CallbackTarget = target;
+            cold.Callback = action;
+            cold.Dispatch = t =>
             {
-                var callback = t.cold.InvokerCallback as Action<T>;
+                var callback = t.cold.Callback as Action<T>;
                 Assert.IsNotNull(callback);
-                
-                var callbackTarget = t.cold.InvokeTarget as T;
-                
+
+                var callbackTarget = t.cold.CallbackTarget as T;
+
                 try
                 {
                     callback(callbackTarget);
@@ -66,15 +80,14 @@ namespace CustomEvent
             if (action == null) return;
             Assert.IsNotNull(cold, "PooledEventData.cold is null. Create() / ReleaseCold()에서 cold 연결을 확인하세요.");
 
-            cold.InvokeTarget = target;
-            cold.InvokerCallback = action;
-            cold.Invoker = t =>
+            cold.CallbackTarget = target;
+            cold.Callback = action;
+            cold.DispatchObj = (t, obj) =>
             {
-                var callback = t.cold.InvokerCallback as Action<T, GameObject>;
+                var callback = t.cold.Callback as Action<T, GameObject>;
                 Assert.IsNotNull(callback);
 
-                var callbackTarget = t.cold.InvokeTarget as T;
-                var obj = t.cold.InvokeObj as GameObject;
+                var callbackTarget = t.cold.CallbackTarget as T;
 
                 try
                 {
@@ -86,7 +99,7 @@ namespace CustomEvent
                 }
             };
         }
-        
+
         void HandleCallbackException(Exception e)
         {
             Debug.LogException(e, target as UnityEngine.Object);

@@ -1,0 +1,23 @@
+using System;
+using UnityEngine;
+
+[Serializable]
+public class Cooldown
+{
+    public Cooldown() { }
+
+    public Cooldown(float cooldownTime)
+    {
+        this.cooldownTime = cooldownTime;
+    }
+
+    private float _nextFireTime;
+
+    [SerializeField] private float cooldownTime;
+
+    public bool IsCoolingDown => Time.time < _nextFireTime;
+    public float Duration => cooldownTime;
+    public void StartCooldown() => _nextFireTime = Time.time + cooldownTime;
+
+    public void Reset() => _nextFireTime = 0;
+}

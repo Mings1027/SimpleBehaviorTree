@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 3127886466436522519}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.16292, y: 0.18472, z: -0.5}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -44,9 +44,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1b1d91555dd4724abd744f64adc88cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObjectPoolManager
-  useDontDestroyOnLoad: 1
+  useDontDestroyOnLoad: 0
   presets:
-  - Prefab: {fileID: 7945400694035614561, guid: 6d12bd6c1af0f42308cf68a83e077089, type: 3}
+  - Prefab: {fileID: 7945400694035614561, guid: 834640f76aa6345c79e36fb512202426, type: 3}
+    Count: 10
+    UseAutoRelease: 1
+    AutoReleaseDelay: 5
+  - Prefab: {fileID: 7945400694035614561, guid: 5b590f1403ad3476bae8c9f008efdd63, type: 3}
+    Count: 10
+    UseAutoRelease: 1
+    AutoReleaseDelay: 5
+  - Prefab: {fileID: 7945400694035614561, guid: 206a6836077534e9c866811abf3ad3b0, type: 3}
+    Count: 10
+    UseAutoRelease: 1
+    AutoReleaseDelay: 5
+  - Prefab: {fileID: 7945400694035614561, guid: d35a74aeeb02a4d038a3f3da9746eef5, type: 3}
     Count: 10
     UseAutoRelease: 1
     AutoReleaseDelay: 5

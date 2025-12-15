@@ -37,24 +37,28 @@ namespace CustomEvent
         public PooledEvent Bind<T>(T target, Action<T> action) where T : class
         {
             AssertValid();
-            cold.ResetForBind(); // 🔴 핵심 (아래 정의)
+            cold.ResetForBind();
             cold.ManagedData.Set(target, action);
+#if UNITY_EDITOR
             SetupDebug(target);
+#endif
             return this;
         }
 
         public PooledEvent Bind<T>(T target, Action<T, GameObject> action) where T : class
         {
             AssertValid();
-            cold.ResetForBind(); // 🔴 핵심
+            cold.ResetForBind();
             cold.ManagedData.Set(target, action);
+#if UNITY_EDITOR
             SetupDebug(target);
+#endif
             return this;
         }
 
         public void Invoke()
         {
-            AssertValid();
+            if (cold == null) return;
             cold.Dispatch?.Invoke(cold.ManagedData);
 #if UNITY_EDITOR
             if (cold.Dispatch != null)
@@ -64,7 +68,7 @@ namespace CustomEvent
 
         public void InvokeEvent(GameObject go)
         {
-            AssertValid();
+            if (cold == null) return;
 #if UNITY_EDITOR
             cold.DebugInvokeObj = go;
 #endif

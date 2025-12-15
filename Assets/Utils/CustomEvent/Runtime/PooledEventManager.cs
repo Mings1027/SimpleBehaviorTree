@@ -72,11 +72,9 @@ namespace CustomEvent
             var idx = _pool.Count - 1;
             var cold = _pool[idx];
             _pool.RemoveAt(idx);
-
 #if UNITY_EDITOR
             _used.Add(cold); // 사용 중 목록에 추가 
 #endif
-
             return cold;
         }
 
@@ -84,11 +82,9 @@ namespace CustomEvent
         {
             cold.Clear();
             cold.ManagedData.cold = cold;
-
 #if UNITY_EDITOR
             _used.Remove(cold); // 사용 중 목록에서 제거 
 #endif
-
             _pool.Add(cold);
         }
     }

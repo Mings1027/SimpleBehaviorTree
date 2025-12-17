@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class Player : UpdateBehaviour
@@ -8,7 +7,7 @@ public class Player : UpdateBehaviour
 
     private void Awake()
     {
-        ObjectPoolManager.Register(prefab, 10, true, 3);
+        ObjectPoolManager.Register(prefab, 10);
     }
 
     public override void OnUpdate()
@@ -33,6 +32,5 @@ public class Player : UpdateBehaviour
 
     private void Delete()
     {
-        ObjectPoolManager.ClearPool(prefab);
     }
 }

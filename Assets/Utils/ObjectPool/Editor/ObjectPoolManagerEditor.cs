@@ -1,161 +1,97 @@
-using System.Collections.Generic;
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
 
 [CustomEditor(typeof(ObjectPoolManager))]
 public class ObjectPoolManagerEditor : Editor
 {
-    private bool _showRuntimePools = true;
-    private GameObject _searchPrefab;
-    private readonly Dictionary<GameObject, bool> _poolFoldouts = new();
-
-    private void OnEnable()
-    {
-        EditorApplication.update += OnEditorUpdate;
-    }
-
-    private void OnDisable()
-    {
-        EditorApplication.update -= OnEditorUpdate;
-    }
-
-    private void OnEditorUpdate()
-    {
-        if (Application.isPlaying)
-            Repaint();
-    }
-
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
 
-        DrawPrefabLookup();
+        if (!Application.isPlaying)
+            return;
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Runtime Pool State", EditorStyles.boldLabel);
+
         DrawRuntimePools();
     }
 
-    // ===============================
-    // Prefab Lookup
-    // ===============================
-    private void DrawPrefabLookup()
-    {
-        GUILayout.Space(12);
-        EditorGUILayout.LabelField("Prefab Lookup", EditorStyles.boldLabel);
-
-        _searchPrefab = (GameObject)EditorGUILayout.ObjectField(
-            "Search Prefab",
-            _searchPrefab,
-            typeof(GameObject),
-            false
-        );
-
-        if (_searchPrefab == null)
-            return;
-
-        var manager = (ObjectPoolManager)target;
-
-        bool inPreset = manager.PresetsContains(_searchPrefab);
-        bool inRuntime = ObjectPoolManager.IsRegistered(_searchPrefab);
-
-        if (inPreset)
-        {
-            EditorGUILayout.HelpBox("Preset registered", MessageType.Info);
-            return;
-        }
-
-        if (inRuntime)
-        {
-            EditorGUILayout.HelpBox("Runtime registered (code)", MessageType.Warning);
-            return;
-        }
-
-        EditorGUILayout.HelpBox("Not registered", MessageType.Error);
-    }
-
-
-    // ===============================
-    // Runtime Pool Debug
-    // ===============================
     private void DrawRuntimePools()
     {
-        GUILayout.Space(12);
-        EditorGUILayout.LabelField("Runtime Pools (Debug)", EditorStyles.boldLabel);
+        var poolsField = typeof(ObjectPoolManager)
+            .GetField("pools", BindingFlags.NonPublic | BindingFlags.Static);
 
-        if (!Application.isPlaying)
+        var poolRootsField = typeof(ObjectPoolManager)
+            .GetField("poolRoots", BindingFlags.NonPublic | BindingFlags.Static);
+
+        var pools = poolsField?.GetValue(null) as IDictionary;
+        var poolRoots = poolRootsField?.GetValue(null) as Dictionary<GameObject, Transform>;
+
+        if (pools == null || pools.Count == 0)
         {
-            EditorGUILayout.HelpBox(
-                "Runtime pool info is available in Play Mode only.",
-                MessageType.Info
-            );
+            EditorGUILayout.HelpBox("No runtime pools.", MessageType.Info);
             return;
         }
 
-        _showRuntimePools = EditorGUILayout.Foldout(
-            _showRuntimePools,
-            "Active Pools",
-            true
+        foreach (DictionaryEntry kv in pools)
+        {
+            var prefab = kv.Key as GameObject;
+            var pool = kv.Value;
+
+            if (prefab == null || pool == null)
+                continue;
+
+            // Inactive count
+            var inactiveField = pool.GetType().GetField("Inactive");
+            var inactiveStack = inactiveField?.GetValue(pool) as ICollection;
+            int inactiveCount = inactiveStack?.Count ?? 0;
+
+            // Active count
+            int activeCount = CountActiveInstances(prefab);
+
+            // Pool Root
+            Transform rootTr = null;
+            if (poolRoots != null)
+                poolRoots.TryGetValue(prefab, out rootTr);
+
+            EditorGUILayout.BeginVertical("box");
+
+            EditorGUILayout.ObjectField("Prefab", prefab, typeof(GameObject), false);
+
+            if (rootTr != null)
+                EditorGUILayout.ObjectField("Pool Root", rootTr.gameObject, typeof(GameObject), true);
+
+            EditorGUILayout.LabelField($"Active: {activeCount}    Inactive: {inactiveCount}");
+
+            EditorGUILayout.EndVertical();
+        }
+    }
+
+
+    private int CountActiveInstances(GameObject prefab)
+    {
+        int count = 0;
+
+        var all = FindObjectsByType<PooledObject>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
         );
 
-        if (!_showRuntimePools)
-            return;
-
-        var info = ObjectPoolManager.GetPoolDebugInfo();
-
-        if (info.Count == 0)
+        foreach (var pooled in all)
         {
-            EditorGUILayout.LabelField("No pools registered.");
-            return;
-        }
-
-        foreach (var kv in info)
-        {
-            var prefab = kv.Key;
-            var (total, inactive) = kv.Value;
-            int active = total - inactive;
-
-            if (!_poolFoldouts.ContainsKey(prefab))
-                _poolFoldouts[prefab] = false;
-
-            bool highlight =
-                _searchPrefab != null &&
-                prefab == _searchPrefab;
-
-            using (new EditorGUILayout.VerticalScope(
-                       highlight ? "SelectionRect" : "box"))
+            if (pooled.gameObject.activeInHierarchy &&
+                pooled.gameObject.name == prefab.name)
             {
-                DrawPoolFoldout(prefab, total, active, inactive);
+                count++;
             }
         }
-    }
 
-    private void DrawPoolFoldout(GameObject prefab, int total, int active, int inactive)
-    {
-        bool isExpanded = _poolFoldouts[prefab];
-
-        string header = isExpanded ? prefab.name : $"{prefab.name}    T:{total}  A:{active}  I:{inactive}";
-
-        _poolFoldouts[prefab] = EditorGUILayout.BeginFoldoutHeaderGroup(
-            isExpanded,
-            header
-        );
-
-        if (_poolFoldouts[prefab])
-        {
-            EditorGUI.indentLevel++;
-
-            EditorGUILayout.ObjectField(
-                "Prefab",
-                prefab,
-                typeof(GameObject),
-                false
-            );
-
-            EditorGUILayout.LabelField("Total", total.ToString());
-            EditorGUILayout.LabelField("Active", active.ToString());
-            EditorGUILayout.LabelField("Inactive", inactive.ToString());
-
-            EditorGUI.indentLevel--;
-        }
-
-        EditorGUILayout.EndFoldoutHeaderGroup();
+        return count;
     }
 }
+#endif

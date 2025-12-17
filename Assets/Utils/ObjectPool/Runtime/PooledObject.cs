@@ -4,6 +4,7 @@ using UnityEngine;
 public sealed class PooledObject : MonoBehaviour
 {
     private GameObject _prefab;
+
     public bool IsInPool { get; private set; }
 
     internal void Init(GameObject prefab)
@@ -22,9 +23,13 @@ public sealed class PooledObject : MonoBehaviour
         IsInPool = true;
     }
 
-    public void Release()
+    public void ReturnToPool()
     {
         if (IsInPool) return;
+        
+        if (!ObjectPoolManager.HasInstance)
+            return;
+
         ObjectPoolManager.Release(_prefab, gameObject);
     }
 }

@@ -45,20 +45,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObjectPoolManager
   useDontDestroyOnLoad: 0
-  presets:
-  - Prefab: {fileID: 7945400694035614561, guid: 834640f76aa6345c79e36fb512202426, type: 3}
-    Count: 10
-    UseAutoRelease: 1
-    AutoReleaseDelay: 5
-  - Prefab: {fileID: 7945400694035614561, guid: 5b590f1403ad3476bae8c9f008efdd63, type: 3}
-    Count: 10
-    UseAutoRelease: 1
-    AutoReleaseDelay: 5
-  - Prefab: {fileID: 7945400694035614561, guid: 206a6836077534e9c866811abf3ad3b0, type: 3}
-    Count: 10
-    UseAutoRelease: 1
-    AutoReleaseDelay: 5
-  - Prefab: {fileID: 7945400694035614561, guid: d35a74aeeb02a4d038a3f3da9746eef5, type: 3}
-    Count: 10
-    UseAutoRelease: 1
-    AutoReleaseDelay: 5
+  poolRegistry: {fileID: 11400000, guid: a6345b9aa900346d695735c0b77378ba, type: 2}

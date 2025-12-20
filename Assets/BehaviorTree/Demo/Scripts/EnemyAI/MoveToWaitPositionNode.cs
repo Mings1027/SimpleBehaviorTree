@@ -23,17 +23,13 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
             // 이동 중
             if (dist > 0.2f)
             {
-                _ctx.self.position = Vector3.MoveTowards(
-                    _ctx.self.position,
-                    targetPos,
-                    _ctx.moveSpeed * Time.deltaTime
-                );
-
+                _ctx.MoveDirection = (targetPos - _ctx.self.position).normalized;
                 return NodeState.Running;
             }
 
             // 도착했어도 계속 Running → Idle 유지 상태
-            return NodeState.Running;
+            _ctx.MoveDirection = Vector3.zero;
+            return NodeState.Success;
         }
     }
 }

@@ -15,7 +15,7 @@ namespace CustomEvent
 
         public static PooledEvent Create()
         {
-            var cold = PooledEventManager.Instance.GetCold();
+            var cold = PooledEventManager.GetCold();
             cold.ManagedData.cold = cold;
             return new PooledEvent { cold = cold };
         }
@@ -23,7 +23,8 @@ namespace CustomEvent
         public void Dispose()
         {
             if (cold == null) return;
-            PooledEventManager.Instance.ReleaseCold(cold);
+            
+            PooledEventManager.ReleaseCold(cold);
             cold = null;
         }
 

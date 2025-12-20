@@ -1,5 +1,3 @@
-using BehaviorTree;
-
 namespace BehaviorTree.Demo.Scripts.EnemyAI
 {
     public class CanAttackNode : Node

@@ -11,6 +11,12 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
             _ctx = ctx;
         }
 
+        protected override void OnStart()
+        {
+            base.OnStart();
+            _ctx.MoveDirection = Vector3.zero;
+        }
+
         protected override NodeState OnUpdate()
         {
             if (_ctx.self == null || _ctx.target == null)

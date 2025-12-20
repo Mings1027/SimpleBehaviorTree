@@ -1,8 +1,8 @@
-using System;
 using BehaviorTree;
 using BehaviorTree.Demo.Scripts.EnemyAI;
 using CustomEvent;
 using UnityEngine;
+using Utils;
 
 public class Enemy : MonoBehaviour
 {
@@ -12,10 +12,11 @@ public class Enemy : MonoBehaviour
     private int curHealth;
 
     private BehaviorTreeController _treeController;
+    private AIContext blackboard => _treeController.Blackboard;
 
     [SerializeField] private int maxHealth = 100;
-    [SerializeField] private AIContext blackboard;
     [SerializeField] private Transform waitTransform;
+    [SerializeField] private bool physicsMove;
 
     private void Awake()
     {
@@ -33,6 +34,16 @@ public class Enemy : MonoBehaviour
     {
         curHealth = maxHealth;
         _treeController.CreateTree(CreateTree());
+
+        if (physicsMove)
+        {
+            gameObject.TryGetOrAddComponent<Rigidbody>();
+            gameObject.TryGetOrAddComponent<BehaviorTreePhysicsMover>();
+        }
+        else
+        {
+            transform.TryGetOrAddComponent<BehaviorTreeMover>();
+        }
     }
 
     private void OnDisable()
@@ -42,6 +53,8 @@ public class Enemy : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+        if (!Application.isPlaying) return;
+        if (blackboard == null) return;
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, blackboard.detectionRange);
         Gizmos.color = Color.red;
@@ -50,7 +63,6 @@ public class Enemy : MonoBehaviour
 
     private Node CreateTree()
     {
-        blackboard.self = transform;
         blackboard.waitPosition = waitTransform;
 
         var root = new SelectorNode();
@@ -106,12 +118,6 @@ public class Enemy : MonoBehaviour
 
         // 항상 먼저 타겟 검색/유지
         combatSequence.AddChild(new FindTargetNode(blackboard));
-
-        // // 타겟이 있어야 전투 가능
-        // combatSequence.AddChild(new HasTargetNode(blackboard));
-        //
-        // // 타겟이 탐지 범위 안에 있어야 전투 유지
-        // combatSequence.AddChild(new TargetValidNode(blackboard));
 
         var combatSelector = new SelectorNode();
         combatSequence.AddChild(combatSelector);

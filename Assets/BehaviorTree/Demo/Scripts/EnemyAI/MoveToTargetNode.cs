@@ -18,13 +18,13 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
             if (_ctx.self == null || _ctx.target == null)
                 return NodeState.Failure;
 
-            Vector3 selfPos   = _ctx.self.position;
+            Vector3 selfPos = _ctx.self.position;
             Vector3 targetPos = _ctx.target.position;
-            Vector3 toTarget  = targetPos - selfPos;
+            Vector3 toTarget = targetPos - selfPos;
 
-            float sqrDist        = toTarget.sqrMagnitude;
-            float sqrAttackRange = _ctx.attackRange   * _ctx.attackRange;
-            float sqrLostRange   = _ctx.detectionRange * _ctx.detectionRange * LOST_MULT * LOST_MULT;
+            float sqrDist = toTarget.sqrMagnitude;
+            float sqrAttackRange = _ctx.attackRange * _ctx.attackRange;
+            float sqrLostRange = _ctx.detectionRange * _ctx.detectionRange * LOST_MULT * LOST_MULT;
 
             // 1) 타겟을 완전히 잃어버린 경우
             if (sqrDist > sqrLostRange)
@@ -49,7 +49,7 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
                 // 두 벡터 합성
                 Vector3 finalDir = (moveDir + separation).normalized;
 
-                _ctx.self.position += finalDir * (_ctx.moveSpeed * Time.deltaTime);
+                _ctx.MoveDirection = finalDir;
             }
 
             return NodeState.Running;
@@ -59,8 +59,8 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
         private Vector3 GetSeparationForce()
         {
             Vector3 force = Vector3.zero;
-            float desiredDistance = 2.0f;      // 서로 최소 유지 거리
-            float pushStrength = 2.0f;         // 밀어내는 힘
+            float desiredDistance = 2.0f; // 서로 최소 유지 거리
+            float pushStrength = 2.0f; // 밀어내는 힘
 
             foreach (var other in EnemyManager.allEnemies)
             {
@@ -72,12 +72,11 @@ namespace BehaviorTree.Demo.Scripts.EnemyAI
                     Vector3 pushDir = (_ctx.self.position - other.transform.position).normalized;
                     float scale = (desiredDistance - dist) / desiredDistance;
 
-                    force += pushDir * scale * pushStrength;
+                    force += pushDir * (scale * pushStrength);
                 }
             }
 
             return force;
         }
-
     }
 }

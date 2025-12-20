@@ -11,8 +11,8 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>
         public readonly Stack<GameObject> Inactive = new();
     }
 
-    private static readonly Dictionary<GameObject, Pool> pools = new();
-    private static readonly Dictionary<GameObject, PoolEntry> entryLookup = new();
+    private static readonly Dictionary<GameObject, Pool> poolTable = new();
+    private static readonly Dictionary<GameObject, PoolEntry> entryTable = new();
 
     private static AutoReleaseManager autoReleaseManager;
 
@@ -24,8 +24,8 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>
     private static void ResetStatic()
     {
         _instance = null;
-        pools.Clear();
-        entryLookup.Clear();
+        poolTable.Clear();
+        entryTable.Clear();
 #if UNITY_EDITOR
         poolRoots.Clear();
 #endif
@@ -52,7 +52,7 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>
             if (entry.Prefab == null)
                 continue;
 
-            entryLookup[entry.Prefab] = entry;
+            entryTable[entry.Prefab] = entry;
             Register(entry.Prefab, entry.PreloadCount);
 
             if (entry.UseAutoRelease && entry.AutoReleaseDelay > 0f)
@@ -89,11 +89,11 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>
 
         _ = Instance;
 
-        if (pools.ContainsKey(prefab))
+        if (poolTable.ContainsKey(prefab))
             return;
 
         var pool = new Pool();
-        pools[prefab] = pool;
+        poolTable[prefab] = pool;
 
         for (int i = 0; i < preloadCount; i++)
         {
@@ -122,13 +122,13 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>
         if (prefab == null)
             return null;
 
-        if (!pools.TryGetValue(prefab, out var pool))
+        if (!poolTable.TryGetValue(prefab, out var pool))
         {
 #if UNITY_EDITOR
             Debug.LogWarning($"[ObjectPool] Auto-registered prefab: {prefab.name}");
 #endif
             Register(prefab);
-            pool = pools[prefab];
+            pool = poolTable[prefab];
         }
 
         var instance = pool.Inactive.Count > 0
@@ -139,7 +139,7 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>
             pooled.MarkInUse();
 
         // AutoRelease 처리
-        if (entryLookup.TryGetValue(prefab, out var entry) &&
+        if (entryTable.TryGetValue(prefab, out var entry) &&
             entry.UseAutoRelease && entry.AutoReleaseDelay > 0f)
         {
             var auto = instance.TryGetOrAddComponent<AutoReleaseObject>();
@@ -160,7 +160,7 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>
         if (prefab == null || instance == null)
             return;
 
-        if (!pools.TryGetValue(prefab, out var pool))
+        if (!poolTable.TryGetValue(prefab, out var pool))
             return;
 
         if (instance.TryGetComponent(out AutoReleaseObject auto))

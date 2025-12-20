@@ -5,13 +5,13 @@ public class AutoReleaseManager : MonoBehaviour
 {
     private readonly List<AutoReleaseObject> actives = new();
 
-    public void Register(AutoReleaseObject obj)
+    internal void Register(AutoReleaseObject obj)
     {
         if (!actives.Contains(obj))
             actives.Add(obj);
     }
 
-    public void Unregister(AutoReleaseObject obj)
+    internal void Unregister(AutoReleaseObject obj)
     {
         actives.Remove(obj);
     }

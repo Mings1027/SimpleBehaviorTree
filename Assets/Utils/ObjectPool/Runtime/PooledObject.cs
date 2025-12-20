@@ -5,7 +5,7 @@ public sealed class PooledObject : MonoBehaviour
 {
     private GameObject _prefab;
 
-    public bool IsInPool { get; private set; }
+    internal bool IsInPool { get; private set; }
 
     internal void Init(GameObject prefab)
     {
@@ -23,7 +23,7 @@ public sealed class PooledObject : MonoBehaviour
         IsInPool = true;
     }
 
-    public void ReturnToPool()
+    internal void ReturnToPool()
     {
         if (IsInPool) return;
         

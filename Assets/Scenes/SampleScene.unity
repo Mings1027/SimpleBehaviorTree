@@ -756,7 +756,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   maxHealth: 100
+  waitTransform: {fileID: 179901681}
+  physicsMove: 0
+--- !u!114 &532637528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 532637526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+  updateInterval: 0.1
   blackboard:
+    MoveDirection: {x: 0, y: 0, z: 0}
+    MoveSpeed: 0
     self: {fileID: 0}
     target: {fileID: 0}
     waitPosition: {fileID: 0}
@@ -765,7 +782,7 @@ MonoBehaviour:
     moveSpeed: 3
     targetMask:
       serializedVersion: 2
-      m_Bits: 64
+      m_Bits: 0
     targetBuffer:
     - {fileID: 0}
     - {fileID: 0}
@@ -798,20 +815,7 @@ MonoBehaviour:
     - {fileID: 0}
     - {fileID: 0}
     attackCooldown:
-      cooldownTime: 3
-  waitTransform: {fileID: 179901681}
---- !u!114 &532637528
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 532637526}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+      cooldownTime: 0
 --- !u!65 &532637529
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -951,7 +955,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   maxHealth: 0
+  waitTransform: {fileID: 179901681}
+  physicsMove: 0
+--- !u!114 &710074370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 710074368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+  updateInterval: 0.1
   blackboard:
+    MoveDirection: {x: 0, y: 0, z: 0}
+    MoveSpeed: 0
     self: {fileID: 0}
     target: {fileID: 0}
     waitPosition: {fileID: 0}
@@ -960,7 +981,7 @@ MonoBehaviour:
     moveSpeed: 3
     targetMask:
       serializedVersion: 2
-      m_Bits: 64
+      m_Bits: 0
     targetBuffer:
     - {fileID: 0}
     - {fileID: 0}
@@ -993,20 +1014,7 @@ MonoBehaviour:
     - {fileID: 0}
     - {fileID: 0}
     attackCooldown:
-      cooldownTime: 3
-  waitTransform: {fileID: 179901681}
---- !u!114 &710074370
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 710074368}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+      cooldownTime: 0
 --- !u!65 &710074371
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1244,7 +1252,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   maxHealth: 0
+  waitTransform: {fileID: 179901681}
+  physicsMove: 0
+--- !u!114 &826291848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 826291846}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+  updateInterval: 0.1
   blackboard:
+    MoveDirection: {x: 0, y: 0, z: 0}
+    MoveSpeed: 0
     self: {fileID: 0}
     target: {fileID: 0}
     waitPosition: {fileID: 0}
@@ -1253,7 +1278,7 @@ MonoBehaviour:
     moveSpeed: 3
     targetMask:
       serializedVersion: 2
-      m_Bits: 64
+      m_Bits: 0
     targetBuffer:
     - {fileID: 0}
     - {fileID: 0}
@@ -1286,20 +1311,7 @@ MonoBehaviour:
     - {fileID: 0}
     - {fileID: 0}
     attackCooldown:
-      cooldownTime: 3
-  waitTransform: {fileID: 179901681}
---- !u!114 &826291848
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 826291846}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+      cooldownTime: 0
 --- !u!65 &826291849
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1475,7 +1487,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   maxHealth: 0
+  waitTransform: {fileID: 179901681}
+  physicsMove: 0
+--- !u!114 &927716646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 927716644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+  updateInterval: 0.1
   blackboard:
+    MoveDirection: {x: 0, y: 0, z: 0}
+    MoveSpeed: 0
     self: {fileID: 0}
     target: {fileID: 0}
     waitPosition: {fileID: 0}
@@ -1484,7 +1513,7 @@ MonoBehaviour:
     moveSpeed: 3
     targetMask:
       serializedVersion: 2
-      m_Bits: 64
+      m_Bits: 0
     targetBuffer:
     - {fileID: 0}
     - {fileID: 0}
@@ -1517,20 +1546,7 @@ MonoBehaviour:
     - {fileID: 0}
     - {fileID: 0}
     attackCooldown:
-      cooldownTime: 3
-  waitTransform: {fileID: 179901681}
---- !u!114 &927716646
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 927716644}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+      cooldownTime: 0
 --- !u!65 &927716647
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1783,7 +1799,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   maxHealth: 0
+  waitTransform: {fileID: 179901681}
+  physicsMove: 1
+--- !u!114 &1299969990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1299969988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+  updateInterval: 0.1
   blackboard:
+    MoveDirection: {x: 0, y: 0, z: 0}
+    MoveSpeed: 2
     self: {fileID: 0}
     target: {fileID: 0}
     waitPosition: {fileID: 0}
@@ -1825,20 +1858,7 @@ MonoBehaviour:
     - {fileID: 0}
     - {fileID: 0}
     attackCooldown:
-      cooldownTime: 3
-  waitTransform: {fileID: 179901681}
---- !u!114 &1299969990
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1299969988}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94625815537594a4c8037ec729b22f62, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BehaviorTree.BehaviorTreeController
+      cooldownTime: 1
 --- !u!65 &1299969991
 BoxCollider:
   m_ObjectHideFlags: 0

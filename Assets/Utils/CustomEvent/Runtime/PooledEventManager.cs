@@ -59,33 +59,44 @@ namespace CustomEvent
             }
         }
 
-        internal ColdData GetCold()
+        internal static ColdData GetCold()
         {
-            if (_pool.Count == 0)
+            if (ReferenceEquals(Instance, null)) return null;
+
+            var pool = _instance._pool;
+            var poolCapacity = _instance._poolCapacity;
+
+            if (pool.Count == 0)
             {
                 // 자동 확장
-                _poolCapacity *= 2;
-                for (var i = 0; i < _poolCapacity; i++)
-                    _pool.Add(new ColdData());
+                poolCapacity *= 2;
+                for (var i = 0; i < poolCapacity; i++)
+                    pool.Add(new ColdData());
             }
 
-            var idx = _pool.Count - 1;
-            var cold = _pool[idx];
-            _pool.RemoveAt(idx);
+            var idx = pool.Count - 1;
+            var cold = pool[idx];
+            pool.RemoveAt(idx);
 #if UNITY_EDITOR
-            _used.Add(cold); // 사용 중 목록에 추가 
+            _instance._used.Add(cold); // 사용 중 목록에 추가 
 #endif
             return cold;
         }
 
-        internal void ReleaseCold(ColdData cold)
+        internal static void ReleaseCold(ColdData cold)
         {
+            if (ReferenceEquals(_instance, null))
+            {
+                cold.Clear();
+                return;
+            }
+
             cold.Clear();
             cold.ManagedData.cold = cold;
 #if UNITY_EDITOR
-            _used.Remove(cold); // 사용 중 목록에서 제거 
+            _instance._used.Remove(cold); // 사용 중 목록에서 제거 
 #endif
-            _pool.Add(cold);
+            _instance._pool.Add(cold);
         }
     }
 }

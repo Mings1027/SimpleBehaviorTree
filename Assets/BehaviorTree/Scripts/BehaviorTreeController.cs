@@ -1,10 +1,10 @@
 using UnityEngine;
 using BehaviorTree;
 using System.Collections.Generic;
+using BehaviorTree.Demo.Scripts.EnemyAI;
 
 public class BehaviorTreeController : MonoBehaviour
 {
-    [SerializeField]
     private Node _rootNode;
 
 #if UNITY_EDITOR
@@ -17,11 +17,19 @@ public class BehaviorTreeController : MonoBehaviour
     public readonly Dictionary<Node, NodeState> LastResults = new();
 #endif
 
+    private float remainingTime;
+
+    [SerializeField] private float updateInterval = 0.1f;
+
+    [SerializeField] private AIContext blackboard;
+    public AIContext Blackboard => blackboard;
+
     private void OnEnable()
     {
 #if UNITY_EDITOR
         Node.OnNodeUpdated += HandleNodeUpdated;
 #endif
+        remainingTime = updateInterval;
     }
 
     private void OnDisable()
@@ -41,7 +49,12 @@ public class BehaviorTreeController : MonoBehaviour
         LastResults.Clear();
 #endif
 
-        _rootNode.Update();
+        remainingTime -= Time.deltaTime;
+        if (remainingTime <= 0)
+        {
+            remainingTime = updateInterval;
+            _rootNode.Update();
+        }
     }
 
 #if UNITY_EDITOR
@@ -59,6 +72,8 @@ public class BehaviorTreeController : MonoBehaviour
 
     public void CreateTree(Node rootNode)
     {
+        blackboard.self = transform;
+        
         _rootNode = rootNode;
     }
 }

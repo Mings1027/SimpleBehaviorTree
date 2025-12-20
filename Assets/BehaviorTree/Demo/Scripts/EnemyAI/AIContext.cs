@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using Utilities;
 
 namespace BehaviorTree.Demo.Scripts.EnemyAI
 {

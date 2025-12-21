@@ -1,16 +1,25 @@
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public sealed class PooledObject : MonoBehaviour
 {
-    private GameObject _prefab;
+    private GameObject _poolKey;
 
+    internal bool IsDestroyed { get; private set; }
+    
     internal bool IsInPool { get; private set; }
+
+    private void OnDestroy()
+    {
+        IsDestroyed = true;
+    }
 
     internal void Init(GameObject prefab)
     {
-        _prefab = prefab;
+        _poolKey = prefab;
         IsInPool = true;
+        IsDestroyed = false;
     }
 
     internal void MarkInUse()
@@ -27,9 +36,6 @@ public sealed class PooledObject : MonoBehaviour
     {
         if (IsInPool) return;
         
-        if (!ObjectPoolManager.HasInstance)
-            return;
-
-        ObjectPoolManager.Release(_prefab, gameObject);
+        ObjectPoolManager.Release(_poolKey, this);
     }
 }

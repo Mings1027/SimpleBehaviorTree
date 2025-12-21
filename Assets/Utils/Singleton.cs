@@ -10,6 +10,12 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     private const string SceneRootName = "[Singletons]";
     private const string DontDestroyRootName = "[DontDestroy Singletons]";
 
+    /// <summary>
+    /// 싱글톤 인스턴스가 현재 존재하는지 확인합니다.
+    /// 씬 종료 시점이나 파괴 과정에서 불필요한 인스턴스 생성을 방지하기 위해 사용됩니다.
+    /// </summary>
+    public static bool HasInstance => _instance != null;
+    
     protected static T Instance
     {
         get

@@ -7,16 +7,16 @@ public class Player : UpdateBehaviour
 
     private void Awake()
     {
-        ObjectPoolManager.Register(prefab, 10);
+        // ObjectPoolManager.Register(prefab, 10, true, 4);
     }
 
     public override void OnUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKey(KeyCode.Space))
         {
             Shoot();
         }
-        
+
         if (Input.GetKeyDown(KeyCode.X))
         {
             Delete();
@@ -25,12 +25,8 @@ public class Player : UpdateBehaviour
 
     private void Shoot()
     {
-        var projectile = ObjectPoolManager.Get(prefab, false);
-        projectile.transform.SetPositionAndRotation(firePoint.position, firePoint.rotation);
-        projectile.SetActive(true);
+        ObjectPoolManager.Get(prefab, firePoint.position, firePoint.rotation);
     }
 
-    private void Delete()
-    {
-    }
+    private void Delete() { }
 }

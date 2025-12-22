@@ -50,10 +50,10 @@ public class EventHostA : MonoBehaviour
             eventA2.Invoke();
 
         if (Input.GetKeyDown(KeyCode.Alpha3))
-            eventA3.InvokeEvent(gameObject);
+            eventA3.Invoke(gameObject);
 
         if (Input.GetKeyDown(KeyCode.Alpha4))
-            eventA4.InvokeEvent(gameObject);
+            eventA4.Invoke(gameObject);
 
         if (Input.GetKeyDown(KeyCode.Space))
             eventA5.Invoke();
@@ -61,7 +61,7 @@ public class EventHostA : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        OnHit.InvokeEvent(other.gameObject);
+        OnHit.Invoke(other.gameObject);
     }
 
     private void OnEventA1()

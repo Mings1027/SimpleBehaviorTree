@@ -67,7 +67,7 @@ namespace CustomEvent
 #endif
         }
 
-        public void InvokeEvent(GameObject go)
+        public void Invoke(GameObject go)
         {
             if (cold == null) return;
 #if UNITY_EDITOR

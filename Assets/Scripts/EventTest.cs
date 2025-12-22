@@ -16,7 +16,7 @@ namespace DefaultNamespace
 
         private void OnTriggerEnter(Collider other)
         {
-            OnHit.InvokeEvent(other.gameObject);
+            OnHit.Invoke(other.gameObject);
         }
     }
 }

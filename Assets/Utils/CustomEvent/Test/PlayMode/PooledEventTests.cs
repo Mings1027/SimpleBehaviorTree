@@ -10,7 +10,7 @@ public class PooledEventTests
         PooledEvent evt = default;
 
         evt.Invoke();
-        evt.InvokeEvent(null);
+        evt.Invoke(null);
 
         Assert.Pass();
     }
@@ -39,7 +39,7 @@ public class PooledEventTests
         var evt = PooledEvent.Create()
             .Bind(receiver, (r, obj) => r.OnCallWithObj(r, obj));
 
-        evt.InvokeEvent(go);
+        evt.Invoke(go);
 
         Assert.AreEqual(1, receiver.callCount);
         Assert.AreEqual(go, receiver.lastObj);
@@ -59,7 +59,7 @@ public class PooledEventTests
         evt.Dispose();
 
         evt.Invoke();
-        evt.InvokeEvent(null);
+        evt.Invoke(null);
 
         Assert.AreEqual(0, receiver.callCount);
     }

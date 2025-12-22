@@ -15,8 +15,8 @@ MonoBehaviour:
   entries:
   - Prefab: {fileID: 7945400694035614561, guid: 6d12bd6c1af0f42308cf68a83e077089, type: 3}
     PreloadCount: 10
-    UseAutoRelease: 0
-    AutoReleaseDelay: 0
+    UseAutoRelease: 1
+    AutoReleaseDelay: 2
   - Prefab: {fileID: 7945400694035614561, guid: 834640f76aa6345c79e36fb512202426, type: 3}
     PreloadCount: 10
     UseAutoRelease: 1

@@ -29,6 +29,9 @@ namespace CustomEvent
         }
 
 #if UNITY_EDITOR
+        internal bool LogEnabled;
+        public static void SetEnableLog(bool enable) => Instance.LogEnabled = enable;
+        
         private List<ColdData> _used; // 사용 중인 ColdData 추적
 #endif
         private List<ColdData> _pool;

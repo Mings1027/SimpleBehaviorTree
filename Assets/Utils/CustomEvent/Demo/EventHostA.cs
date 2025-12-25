@@ -23,6 +23,7 @@ public class EventHostA : MonoBehaviour
 
     private void OnEnable()
     {
+        PooledEventManager.SetEnableLog(true);
         eventA1 = PooledEvent.Create().Bind(this, t => t.OnEventA1());
         eventA2 =  PooledEvent.Create();
         eventA3 =  PooledEvent.Create();

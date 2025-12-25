@@ -9,21 +9,26 @@ namespace CustomEvent
     public struct PooledEvent : IDisposable
     {
         internal ColdData cold;
-
-        // ColdData가 세팅된 상태인지 확인하는 내부 속성
         private bool IsValid => cold != null;
 
         public static PooledEvent Create()
         {
             var cold = PooledEventManager.GetCold();
             cold.ManagedData.cold = cold;
+#if UNITY_EDITOR
+            // 전역 스위치가 켜져있으면 로그 출력
+            if (PooledEventManager.Instance.LogEnabled)
+            {
+                PrintLog("Created", null);
+            }
+#endif
             return new PooledEvent { cold = cold };
         }
 
         public void Dispose()
         {
             if (cold == null) return;
-            
+
             PooledEventManager.ReleaseCold(cold);
             cold = null;
         }
@@ -41,7 +46,11 @@ namespace CustomEvent
             cold.ResetForBind();
             cold.ManagedData.Set(target, action);
 #if UNITY_EDITOR
-            SetupDebug(target);
+            cold.DebugTargetObject = target as UnityEngine.Object;
+            if (PooledEventManager.Instance.LogEnabled)
+            {
+                PrintLog("Bound", cold.DebugTargetObject);
+            }
 #endif
             return this;
         }
@@ -52,7 +61,11 @@ namespace CustomEvent
             cold.ResetForBind();
             cold.ManagedData.Set(target, action);
 #if UNITY_EDITOR
-            SetupDebug(target);
+            cold.DebugTargetObject = target as UnityEngine.Object;
+            if (PooledEventManager.Instance.LogEnabled)
+            {
+                PrintLog("Bound", cold.DebugTargetObject);
+            }
 #endif
             return this;
         }
@@ -60,39 +73,44 @@ namespace CustomEvent
         public void Invoke()
         {
             if (cold == null) return;
+
             cold.Dispatch?.Invoke(cold.ManagedData);
 #if UNITY_EDITOR
-            if (cold.Dispatch != null)
-                cold.DebugInvokeCount++;
+            if (cold.Dispatch != null) cold.DebugInvokeCount++;
 #endif
         }
 
-        public void Invoke(GameObject go)
+        public void Invoke(GameObject obj)
         {
             if (cold == null) return;
 #if UNITY_EDITOR
-            cold.DebugInvokeObj = go;
+            cold.DebugInvokeObj = obj;
 #endif
-            cold.DispatchObj?.Invoke(cold.ManagedData, go);
+            cold.DispatchObj?.Invoke(cold.ManagedData, obj);
 #if UNITY_EDITOR
-            if (cold.DispatchObj != null)
-                cold.DebugInvokeCount++;
+            if (cold.DispatchObj != null) cold.DebugInvokeCount++;
 #endif
         }
-
+        
 #if UNITY_EDITOR
-        private void SetupDebug(object target)
+        private static void PrintLog(string action, UnityEngine.Object target)
         {
-            cold.DebugTargetObject = target as UnityEngine.Object;
-            cold.DebugInvokeCount = 0;
-
-            var st = new StackTrace(true);
-            var frame = st.GetFrame(2);
+            // 호출 스택 추적 (0: PrintLog, 1: Create/Bind, 2: 사용자 코드)
+            var st = new StackTrace(2, true);
+            var frame = st.GetFrame(0);
+            
+            string location = "Unknown";
             if (frame != null)
             {
-                cold.DebugBindFile = frame.GetFileName();
-                cold.DebugBindLine = frame.GetFileLineNumber();
+                string fileName = System.IO.Path.GetFileName(frame.GetFileName());
+                int line = frame.GetFileLineNumber();
+                location = $"{fileName}:{line}";
             }
+
+            string targetName = target != null ? target.name : "No Target";
+            string color = action == "Created" ? "cyan" : "green";
+
+            Debug.Log($"<color={color}>[PooledEvent {action}]</color> Target: <b>{targetName}</b> / Location: <b>{location}</b>");
         }
 #endif
     }

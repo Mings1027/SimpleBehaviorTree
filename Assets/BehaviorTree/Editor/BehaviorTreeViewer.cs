@@ -1,176 +1,203 @@
+using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using System.Collections.Generic;
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 using BehaviorTree;
 
 public class BehaviorTreeViewer : EditorWindow
 {
-    private BehaviorTreeController controller;
+    private BehaviorTreeController _controller;
+    private ScrollView _treeContainer;
+    private readonly Dictionary<Node, VisualElement> _nodeElements = new();
 
-    private Texture2D iconRunning;
-    private Texture2D iconSuccess;
-    private Texture2D iconFailure;
+    [MenuItem("Tools/Behavior Tree Viewer")]
+    public static void Open() => GetWindow<BehaviorTreeViewer>("BT Viewer");
 
-    private float nodeHeight = 28f;
-    private float nodeWidth = 200f;
-    private float verticalSpacing = 6f;
-    private float indentWidth = 28f;
-
-    private float currentY;
-
-    // 노드 박스 위치
-    private readonly Dictionary<Node, Rect> nodeRects = new();
-
-    [MenuItem("Window/BehaviorTree/Tree Viewer")]
-    public static void Open()
+    public void CreateGUI()
     {
-        GetWindow<BehaviorTreeViewer>("BT Tree Viewer");
+        VisualElement root = rootVisualElement;
+        root.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f); // 다크 테마 배경색
+
+        var controllerField = new ObjectField("Controller") { objectType = typeof(BehaviorTreeController), allowSceneObjects = true };
+        controllerField.style.paddingTop = 5;
+        controllerField.RegisterValueChangedCallback(evt => { _controller = evt.newValue as BehaviorTreeController; RefreshTreeView(); });
+        root.Add(controllerField);
+
+        _treeContainer = new ScrollView(ScrollViewMode.VerticalAndHorizontal);
+        _treeContainer.style.flexGrow = 1;
+        root.Add(_treeContainer);
+
+        root.schedule.Execute(UpdateNodeStates).Every(100);
     }
 
-    private void OnEnable()
+    private void RefreshTreeView()
     {
-        iconRunning = EditorGUIUtility.IconContent("d_WaitSpin00").image as Texture2D;
-        iconSuccess = EditorGUIUtility.IconContent("TestPassed").image as Texture2D;
-        iconFailure = EditorGUIUtility.IconContent("TestFailed").image as Texture2D;
+        _treeContainer.Clear();
+        _nodeElements.Clear();
+        if (_controller?.RootNode == null) return;
 
-        EditorApplication.update += Repaint;
+        // 최상단 여백
+        VisualElement spacer = new VisualElement();
+        spacer.style.height = 15;
+        _treeContainer.Add(spacer);
+
+        DrawNodeRecursive(_controller.RootNode, _treeContainer, 0, false);
     }
 
-    private void OnDisable()
+    private void DrawNodeRecursive(Node node, VisualElement parentContainer, int depth, bool isLastChild)
     {
-        EditorApplication.update -= Repaint;
-    }
+        // --- [사이즈 및 간격 조절 변수] ---
+        float rowHeight = 40f;      // 줄 높이
+        float boxHeight = 30f;      // 노드 박스 높이
+        float indentWidth = 24f;    // 들여쓰기 너비
+        // ------------------------------
 
-    private void OnGUI()
-    {
-        controller = (BehaviorTreeController)EditorGUILayout.ObjectField(
-            "Controller", controller, typeof(BehaviorTreeController), true);
+        VisualElement row = new VisualElement();
+        row.style.flexDirection = FlexDirection.Row;
+        row.style.height = rowHeight;
+        row.style.alignItems = Align.Center;
 
-        if (controller == null)
+        // 1. 수직 가이드 라인 (깊이만큼 반복)
+        for (int i = 0; i < depth; i++)
         {
-            EditorGUILayout.HelpBox("BehaviorTreeController를 선택하세요.", MessageType.Info);
-            return;
+            VisualElement guide = new VisualElement();
+            guide.style.width = indentWidth;
+            guide.style.height = Length.Percent(100);
+            guide.style.justifyContent = Justify.Center;
+            guide.style.alignItems = Align.Center;
+
+            // 마지막 깊이에서만 포인트를 줌
+            if (i == depth - 1)
+            {
+                // 세로 가이드 바
+                VisualElement vLine = new VisualElement();
+                vLine.style.width = 1;
+                vLine.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f);
+                vLine.style.position = Position.Absolute;
+                vLine.style.top = 0;
+                vLine.style.bottom = isLastChild ? rowHeight / 2f : 0;
+                guide.Add(vLine);
+
+                // 노드 연결 점 (Dot)
+                VisualElement dot = new VisualElement();
+                dot.style.width = 4;
+                dot.style.height = 4;
+                dot.style.backgroundColor = new Color(0.5f, 0.5f, 0.5f);
+                dot.style.borderTopLeftRadius = 2;
+                dot.style.borderTopRightRadius = 2;
+                dot.style.borderBottomLeftRadius = 2;
+                dot.style.borderBottomRightRadius = 2;
+                dot.style.position = Position.Absolute;
+                dot.style.top = rowHeight / 2f - 2f;
+                guide.Add(dot);
+            }
+            row.Add(guide);
         }
 
-        if (controller.RootNode == null)
-        {
-            EditorGUILayout.HelpBox("RootNode가 없습니다.", MessageType.Warning);
-            return;
-        }
+        // 2. 노드 박스 (카드 스타일)
+        VisualElement nodeBox = new VisualElement();
+        nodeBox.style.flexDirection = FlexDirection.Row;
+        nodeBox.style.height = boxHeight;
+        nodeBox.style.minWidth = 140;
+        nodeBox.style.paddingLeft = 8;
+        nodeBox.style.paddingRight = 8;
+        nodeBox.style.alignItems = Align.Center;
+        nodeBox.style.backgroundColor = new Color(0.22f, 0.22f, 0.22f); // 약간 밝은 회색
+        nodeBox.style.borderTopLeftRadius = 3;
+        nodeBox.style.borderTopRightRadius = 3;
+        nodeBox.style.borderBottomLeftRadius = 3;
+        nodeBox.style.borderBottomRightRadius = 3;
+        
+        // 타입별 좌측 포인트 라인
+        ApplyNodeTypeStyle(node, nodeBox);
 
-        GUILayout.Space(10);
+        // 이름 라벨
+        Label label = new Label(node.GetType().Name);
+        label.style.fontSize = 12;
+        label.style.color = new Color(0.85f, 0.85f, 0.85f);
+        label.style.unityTextAlign = TextAnchor.MiddleLeft;
+        label.style.flexGrow = 1;
+        nodeBox.Add(label);
 
-        currentY = 20f;
-        nodeRects.Clear();
+        // 상태 아이콘 전용 컨테이너
+        VisualElement statusIcon = new VisualElement();
+        statusIcon.style.width = 16;
+        statusIcon.style.height = 16;
+        nodeBox.Add(statusIcon);
 
-        DrawNodeRecursive(controller.RootNode, 0);
-    }
+        // 더블 클릭 이벤트
+        nodeBox.RegisterCallback<PointerDownEvent, Node>(OnNodeDoubleClick, node);
 
-    // ------------------------------------------------------------
-    // 트리 재귀 출력
-    // ------------------------------------------------------------
-    private void DrawNodeRecursive(Node node, int depth)
-    {
-        float x = 20 + depth * indentWidth;
-        Rect rect = new Rect(x, currentY, nodeWidth, nodeHeight);
+        row.Add(nodeBox);
+        parentContainer.Add(row);
+        _nodeElements[node] = nodeBox;
 
-        nodeRects[node] = rect;
-
-        DrawNodeBox(rect, node);
-        DrawNodeIcons(rect, node);
-
-        currentY += nodeHeight + verticalSpacing;
-
+        // 3. 자식 노드 재귀
         if (node is CompositeNode comp)
         {
             var children = comp.Children;
             for (int i = 0; i < children.Count; i++)
             {
-                var child = children[i];
-                DrawNodeRecursive(child, depth + 1);
-                DrawConnection(node, child, depth);
+                DrawNodeRecursive(children[i], parentContainer, depth + 1, i == children.Count - 1);
             }
         }
     }
 
-    // ------------------------------------------------------------
-    // 부모 → 자식 직각 연결선
-    // ------------------------------------------------------------
-    private void DrawConnection(Node parent, Node child, int depth)
+    private void ApplyNodeTypeStyle(Node node, VisualElement box)
     {
-        Rect p = nodeRects[parent];
-        Rect c = nodeRects[child];
-
-        float baseX = 20 + depth * indentWidth;
-        float verticalX = baseX - 10;
-
-        float parentY = p.center.y;
-        float childY = c.center.y;
-
-        Handles.color = Color.gray;
-
-        Handles.DrawLine(
-            new Vector2(baseX, parentY),
-            new Vector2(verticalX, parentY)
-        );
-
-        Handles.DrawLine(
-            new Vector2(verticalX, parentY),
-            new Vector2(verticalX, childY)
-        );
-
-        Handles.DrawLine(
-            new Vector2(verticalX, childY),
-            new Vector2(baseX + indentWidth, childY)
-        );
+        box.style.borderLeftWidth = 3;
+        if (node is SequenceNode) box.style.borderLeftColor = new Color(0.2f, 0.5f, 0.8f); // Blue
+        else if (node is SelectorNode) box.style.borderLeftColor = new Color(0.9f, 0.4f, 0.2f); // Orange
+        else if (node is ParallelNode) box.style.borderLeftColor = new Color(0.3f, 0.7f, 0.3f); // Green
+        else box.style.borderLeftColor = new Color(0.4f, 0.4f, 0.4f, 0.5f);
     }
 
-    // ------------------------------------------------------------
-    // 박스
-    // ------------------------------------------------------------
-    private void DrawNodeBox(Rect rect, Node node)
+    private void UpdateNodeStates()
     {
-        GUIStyle style = new GUIStyle(GUI.skin.box)
+        if (_controller == null) return;
+        foreach (var kvp in _nodeElements)
         {
-            alignment = TextAnchor.MiddleLeft,
-            normal = { textColor = Color.white }
-        };
+            Node node = kvp.Key;
+            VisualElement box = kvp.Value;
+            var icon = box.ElementAt(1); // statusIcon 컨테이너
 
-        GUI.Box(rect, node.GetType().Name, style);
-    }
-
-    // ------------------------------------------------------------
-    // 아이콘 표시
-    // ------------------------------------------------------------
-    private void DrawNodeIcons(Rect rect, Node node)
-    {
-        float size = 16f;
-
-        // 이번 프레임에 Update 안 된 노드는 아무 아이콘도 안 그림
-        if (!controller.UpdatedThisFrame.Contains(node))
-            return;
-
-        if (!controller.LastResults.TryGetValue(node, out var state))
-            return;
-
-        // Running 아이콘
-        if (state == NodeState.Running)
-        {
-            var r = new Rect(
-                rect.xMax - size - 4,
-                rect.y + (rect.height - size) * 0.5f,
-                size, size);
-            GUI.DrawTexture(r, iconRunning);
+            if (_controller.UpdatedThisFrame.Contains(node))
+            {
+                _controller.LastResults.TryGetValue(node, out var state);
+                icon.style.backgroundImage = GetStateIcon(state);
+            }
+            else
+            {
+                icon.style.backgroundImage = null;
+            }
         }
-        else
+    }
+
+    private Texture2D GetStateIcon(NodeState state) => state switch {
+        NodeState.Running => EditorGUIUtility.IconContent("d_WaitSpin00").image as Texture2D,
+        NodeState.Success => EditorGUIUtility.IconContent("TestPassed").image as Texture2D,
+        NodeState.Failure => EditorGUIUtility.IconContent("TestFailed").image as Texture2D,
+        _ => null
+    };
+
+    private void OnNodeDoubleClick(PointerDownEvent evt, Node node)
+    {
+        if (evt.clickCount == 2)
         {
-            // Success / Failure 아이콘
-            Texture2D tex = state == NodeState.Success ? iconSuccess : iconFailure;
-            var r = new Rect(
-                rect.xMax - size - 4,
-                rect.y + (rect.height - size) * 0.5f,
-                size, size);
-            GUI.DrawTexture(r, tex);
+            OpenNodeScript(node);
+        }
+    }
+    
+    private void OpenNodeScript(Node node)
+    {
+        Type type = node.GetType();
+        string[] guids = AssetDatabase.FindAssets($"{type.Name} t:Script");
+        foreach (var guid in guids)
+        {
+            var script = AssetDatabase.LoadAssetAtPath<MonoScript>(AssetDatabase.GUIDToAssetPath(guid));
+            if (script != null && script.GetClass() == type) { AssetDatabase.OpenAsset(script); return; }
         }
     }
 }
